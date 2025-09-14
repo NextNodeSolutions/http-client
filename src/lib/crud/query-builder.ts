@@ -2,7 +2,8 @@
  * Advanced query builder for CRUD operations
  */
 
-import type { PaginationParams, QueryFilters } from './operations.js'
+import type { PaginationParams } from '@/types/fetch.js'
+import type { QueryFilters } from './operations.js'
 
 /**
  * Comparison operators

@@ -49,6 +49,7 @@ describe('CrudOperations', () => {
 			put: vi.fn(),
 			patch: vi.fn(),
 			delete: vi.fn(),
+			request: vi.fn(),
 		} as unknown as HttpClient
 
 		config = {
@@ -613,7 +614,7 @@ describe('CrudOperations', () => {
 					raw: {} as Response,
 				}
 
-				vi.mocked(mockHttpClient.delete).mockResolvedValue([
+				vi.mocked(mockHttpClient.request).mockResolvedValue([
 					null,
 					mockResponse,
 				])
@@ -622,11 +623,11 @@ describe('CrudOperations', () => {
 
 				expect(error).toBeNull()
 				expect(result).toBeUndefined()
-				expect(mockHttpClient.delete).toHaveBeenCalledWith(
+				expect(mockHttpClient.request).toHaveBeenCalledWith(
 					'/users/bulk',
 					{
+						method: 'DELETE',
 						body: { ids },
-						headers: undefined,
 					},
 				)
 			})

@@ -108,7 +108,7 @@ export class CrudOperations<T extends BaseResource> {
 			this.config.endpoint,
 			transformedData,
 			{
-				headers: options.headers,
+				...(options.headers && { headers: options.headers }),
 			},
 		)
 
@@ -158,7 +158,7 @@ export class CrudOperations<T extends BaseResource> {
 		}
 
 		const [error, response] = await this.httpClient.get<T>(url, {
-			headers: options.headers,
+			...(options.headers && { headers: options.headers }),
 		})
 
 		if (error) {
@@ -237,7 +237,7 @@ export class CrudOperations<T extends BaseResource> {
 		const [error, response] = await this.httpClient.get<
 			PaginatedResponse<T>
 		>(url, {
-			headers: options.headers,
+			...(options.headers && { headers: options.headers }),
 		})
 
 		if (error) {
@@ -295,7 +295,7 @@ export class CrudOperations<T extends BaseResource> {
 			url,
 			transformedData,
 			{
-				headers: options.headers,
+				...(options.headers && { headers: options.headers }),
 			},
 		)
 
@@ -352,7 +352,7 @@ export class CrudOperations<T extends BaseResource> {
 			url,
 			transformedData,
 			{
-				headers: options.headers,
+				...(options.headers && { headers: options.headers }),
 			},
 		)
 
@@ -391,7 +391,7 @@ export class CrudOperations<T extends BaseResource> {
 		})
 
 		const [error] = await this.httpClient.delete(url, {
-			headers: options.headers,
+			...(options.headers && { headers: options.headers }),
 		})
 
 		if (error) {
@@ -447,7 +447,7 @@ export class CrudOperations<T extends BaseResource> {
 			url,
 			transformedData,
 			{
-				headers: options.headers,
+				...(options.headers && { headers: options.headers }),
 			},
 		)
 
@@ -506,7 +506,7 @@ export class CrudOperations<T extends BaseResource> {
 			url,
 			transformedData,
 			{
-				headers: options.headers,
+				...(options.headers && { headers: options.headers }),
 			},
 		)
 
@@ -540,9 +540,10 @@ export class CrudOperations<T extends BaseResource> {
 			},
 		})
 
-		const [error] = await this.httpClient.delete(url, {
+		const [error] = await this.httpClient.request(url, {
+			method: 'DELETE',
 			body: { ids },
-			headers: options.headers,
+			...(options.headers && { headers: options.headers }),
 		})
 
 		if (error) {
@@ -583,7 +584,7 @@ export class CrudOperations<T extends BaseResource> {
 
 		if (keys.length > 0) {
 			let oldestTime = Date.now()
-			let oldestKey = keys[0]
+			let oldestKey = keys[0]!
 
 			for (const [key, value] of this.cache) {
 				if (value.timestamp < oldestTime) {
@@ -601,7 +602,7 @@ export class CrudOperations<T extends BaseResource> {
 		return {
 			size: this.cache.size,
 			keys,
-			oldestEntry,
+			...(oldestEntry && { oldestEntry }),
 		}
 	}
 

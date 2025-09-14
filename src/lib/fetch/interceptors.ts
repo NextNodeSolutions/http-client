@@ -398,4 +398,4 @@ export const createInterceptorChain = <
 		interceptors.reduce(
 			(result, interceptor) => interceptor(result, ...args.slice(1)),
 			args[0],
-		)) as T
+		) as ReturnType<T>) as T

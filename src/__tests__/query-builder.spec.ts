@@ -360,8 +360,12 @@ describe('QueryBuilder', () => {
 
 			expect(params.$complex).toBeDefined()
 			// Should create OR conditions for each field
-			expect(params.$complex[0].operator).toBe('or')
-			expect(params.$complex[0].conditions).toHaveLength(3)
+			const complexParam = params.$complex as Array<{
+				operator: string
+				conditions: unknown[]
+			}>
+			expect(complexParam[0]!.operator).toBe('or')
+			expect(complexParam[0]!.conditions).toHaveLength(3)
 		})
 
 		it('should create date range query', () => {
@@ -371,9 +375,13 @@ describe('QueryBuilder', () => {
 			const params = query.build()
 
 			expect(params.$complex).toBeDefined()
-			expect(params.$complex).toHaveLength(2)
-			expect(params.$complex[0].operator).toBe('gte')
-			expect(params.$complex[1].operator).toBe('lte')
+			const complexParam = params.$complex as Array<{
+				operator: string
+				value: string
+			}>
+			expect(complexParam).toHaveLength(2)
+			expect(complexParam[0]!.operator).toBe('gte')
+			expect(complexParam[1]!.operator).toBe('lte')
 		})
 
 		it('should create paginated recent items query', () => {
