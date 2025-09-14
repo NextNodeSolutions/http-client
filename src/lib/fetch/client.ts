@@ -32,9 +32,14 @@ export class HttpClient {
 	private errorInterceptors: ErrorInterceptor[] = []
 
 	constructor(config: HttpClientConfig = {}) {
+		// Merge default headers first
+		const mergedHeaders = {
+			'Content-Type': 'application/json',
+			...config.defaultHeaders,
+		}
+
 		this.config = {
 			baseUrl: '',
-			defaultHeaders: { 'Content-Type': 'application/json' },
 			timeout: 30000,
 			retries: 3,
 			retryDelay: 1000,
@@ -42,11 +47,7 @@ export class HttpClient {
 			enableCache: false,
 			cacheTtl: 300000, // 5 minutes
 			...config,
-			// Merge default headers with custom headers
-			defaultHeaders: {
-				'Content-Type': 'application/json',
-				...config.defaultHeaders,
-			},
+			defaultHeaders: mergedHeaders,
 		}
 
 		apiLogger.info('HTTP Client initialized', {
@@ -110,11 +111,12 @@ export class HttpClient {
 			timeout: requestConfig.timeout ?? this.config.timeout,
 			retries: requestConfig.retries ?? this.config.retries,
 			retryDelay: requestConfig.retryDelay ?? this.config.retryDelay,
-			credentials:
-				requestConfig.credentials ?? this.config.credentials,
+			credentials: requestConfig.credentials ?? this.config.credentials,
 			...(requestConfig.cache && { cache: requestConfig.cache }),
 			...(requestConfig.signal && { signal: requestConfig.signal }),
-			...(requestConfig.body !== undefined && { body: requestConfig.body }),
+			...(requestConfig.body !== undefined && {
+				body: requestConfig.body,
+			}),
 		}
 	}
 
@@ -153,7 +155,9 @@ export class HttpClient {
 
 		for (const interceptor of this.responseInterceptors) {
 			try {
-				modifiedResponse = await interceptor(modifiedResponse) as HttpResponse<T>
+				modifiedResponse = (await interceptor(
+					modifiedResponse,
+				)) as HttpResponse<T>
 			} catch (error) {
 				logError(error, {
 					context: 'response_interceptor',
@@ -196,9 +200,7 @@ export class HttpClient {
 	/**
 	 * Parse response based on Content-Type
 	 */
-	private async parseResponse<T = unknown>(
-		response: Response,
-	): Promise<T> {
+	private async parseResponse<T = unknown>(response: Response): Promise<T> {
 		const contentType = response.headers.get('content-type') || ''
 
 		try {
@@ -424,7 +426,8 @@ export class HttpClient {
 /**
  * Create a new HTTP client instance
  */
-export const createHttpClient = (config?: HttpClientConfig): HttpClient => new HttpClient(config)
+export const createHttpClient = (config?: HttpClientConfig): HttpClient =>
+	new HttpClient(config)
 
 /**
  * Default HTTP client instance

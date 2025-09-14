@@ -12,8 +12,7 @@ import { createRetryExhaustionError } from '@/lib/errors.js'
 import { failure } from '@/types/result.js'
 import { apiLogger } from '@/utils/logger.js'
 
-import type { HttpClientError ,
-	ErrorSeverity} from '@/types/errors.js'
+import type { HttpClientError, ErrorSeverity } from '@/types/errors.js'
 import type { Result } from '@/types/result.js'
 import type { RequestConfig } from '@/types/fetch.js'
 
@@ -69,7 +68,8 @@ export const retryConditions = {
 	/**
 	 * Conservative retry condition - only network and timeout errors
 	 */
-	conservative: (error: HttpClientError): boolean => isNetworkError(error) || isTimeoutError(error),
+	conservative: (error: HttpClientError): boolean =>
+		isNetworkError(error) || isTimeoutError(error),
 
 	/**
 	 * Aggressive retry condition - retry on most errors except client errors
@@ -85,20 +85,24 @@ export const retryConditions = {
 	/**
 	 * Retry only on specific status codes
 	 */
-	statusCodes: (codes: number[]) => (error: HttpClientError): boolean => {
-		if (isHttpError(error)) {
-			return codes.includes(error.status)
-		}
-		return isNetworkError(error) || isTimeoutError(error)
-	},
+	statusCodes:
+		(codes: number[]) =>
+		(error: HttpClientError): boolean => {
+			if (isHttpError(error)) {
+				return codes.includes(error.status)
+			}
+			return isNetworkError(error) || isTimeoutError(error)
+		},
 
 	/**
 	 * Retry based on error severity
 	 */
-	bySeverity: (severities: ErrorSeverity[]) => (error: HttpClientError): boolean => {
-		const severity = getErrorSeverity(error)
-		return severities.includes(severity)
-	},
+	bySeverity:
+		(severities: ErrorSeverity[]) =>
+		(error: HttpClientError): boolean => {
+			const severity = getErrorSeverity(error)
+			return severities.includes(severity)
+		},
 }
 
 /**
@@ -108,7 +112,8 @@ export const calculateRetryDelay = (
 	attempt: number,
 	config: RetryConfig,
 ): number => {
-	const baseDelay = config.baseDelay * Math.pow(config.backoffFactor, attempt - 1)
+	const baseDelay =
+		config.baseDelay * Math.pow(config.backoffFactor, attempt - 1)
 	const delay = Math.min(baseDelay, config.maxDelay)
 
 	if (config.jitter) {
@@ -124,7 +129,8 @@ export const calculateRetryDelay = (
 /**
  * Sleep for specified milliseconds
  */
-const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
+const sleep = (ms: number): Promise<void> =>
+	new Promise(resolve => setTimeout(resolve, ms))
 
 /**
  * Execute function with retry logic
@@ -132,7 +138,10 @@ const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(r
 export const withRetry = async <T>(
 	operation: () => Promise<Result<T, HttpClientError>>,
 	config: Partial<RetryConfig> = {},
-	context: { url: string; method: string } = { url: 'unknown', method: 'unknown' },
+	context: { url: string; method: string } = {
+		url: 'unknown',
+		method: 'unknown',
+	},
 ): Promise<Result<T, HttpClientError>> => {
 	const retryConfig: RetryConfig = { ...DEFAULT_RETRY_CONFIG, ...config }
 	const shouldRetry = retryConfig.shouldRetry || retryConditions.default
@@ -178,9 +187,12 @@ export const withRetry = async <T>(
 			errors.push(error)
 
 			// Check if we should retry
-			if (attempt < retryConfig.maxAttempts && shouldRetry(error, attempt)) {
+			if (
+				attempt < retryConfig.maxAttempts &&
+				shouldRetry(error, attempt)
+			) {
 				const delay = calculateRetryDelay(attempt, retryConfig)
-				
+
 				apiLogger.info('Operation failed, retrying', {
 					details: {
 						attempt,
@@ -252,7 +264,9 @@ export const withRetry = async <T>(
 /**
  * Create a retry wrapper for HTTP operations
  */
-export const createRetryWrapper = <T extends (...args: any[]) => Promise<Result<any, HttpClientError>>>(
+export const createRetryWrapper = <
+	T extends (...args: unknown[]) => Promise<Result<unknown, HttpClientError>>,
+>(
 	operation: T,
 	retryConfig: Partial<RetryConfig> = {},
 ): T => {
@@ -266,9 +280,13 @@ export const createRetryWrapper = <T extends (...args: any[]) => Promise<Result<
 			method: typeof method === 'string' ? method : 'unknown',
 		}
 
-		return withRetry(() => operation(...args), retryConfig, context) as Promise<ReturnType<T>>
+		return withRetry(
+			() => operation(...args),
+			retryConfig,
+			context,
+		) as Promise<ReturnType<T>>
 	}
-	
+
 	return wrapper as unknown as T
 }
 
@@ -279,7 +297,12 @@ export const retryableOperations = {
 	/**
 	 * Create a retryable version of an HTTP client
 	 */
-	wrapClient: <T extends Record<string, (...args: any[]) => Promise<Result<any, HttpClientError>>>>(
+	wrapClient: <
+		T extends Record<
+			string,
+			(...args: unknown[]) => Promise<Result<unknown, HttpClientError>>
+		>,
+	>(
 		client: T,
 		retryConfig: Partial<RetryConfig> = {},
 	): T => {
@@ -304,7 +327,8 @@ export const retryableOperations = {
 		operation: () => Promise<Result<T, HttpClientError>>,
 		retryConfig: Partial<RetryConfig> = {},
 		context?: { url: string; method: string },
-	): Promise<Result<T, HttpClientError>> => withRetry(operation, retryConfig, context),
+	): Promise<Result<T, HttpClientError>> =>
+		withRetry(operation, retryConfig, context),
 }
 
 /**
