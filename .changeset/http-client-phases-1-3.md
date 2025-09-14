@@ -33,8 +33,8 @@ Implement comprehensive HTTP client library with CRUD operations and query build
 
 ## Breaking Changes
 
-This is the initial major release of the HTTP client library. All APIs are new and follow the established NextNode patterns with Result pattern error handling.
+This is the initial release (1.0.0) of the HTTP client library. All APIs are new and follow the established NextNode patterns with Result pattern error handling.
 
 ## Migration
 
-This is a new library - no migration needed. Refer to README.md for comprehensive usage examples.
+This is the first stable release - no migration needed. Refer to README.md for comprehensive usage examples and API documentation.
