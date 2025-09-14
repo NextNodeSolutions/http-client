@@ -1,109 +1,92 @@
 /**
- * Core library functionality tests
+ * Core library functionality tests - HTTP Client exports
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-import { createClient, validateConfig, processData } from '../lib/core.js'
+import {
+	HttpClient,
+	createHttpClient,
+	createCrudOperations,
+} from '../lib/core.js'
 
 // Mock the logger
 vi.mock('../utils/logger.js', () => ({
 	coreLogger: {
 		info: vi.fn(),
 	},
+	apiLogger: {
+		info: vi.fn(),
+	},
 	logError: vi.fn(),
 }))
 
-describe('Core Library', () => {
+describe('Core Library Exports', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 	})
 
-	describe('createClient', () => {
-		it('should create client with default options', () => {
-			const client = createClient()
+	describe('HttpClient', () => {
+		it('should export HttpClient class', () => {
+			expect(HttpClient).toBeDefined()
+			expect(typeof HttpClient).toBe('function')
+		})
 
-			expect(client).toBeDefined()
-			expect(client.apiKey).toBeUndefined()
-			expect(client.baseUrl).toBeUndefined()
+		it('should create HttpClient instance', () => {
+			const client = new HttpClient()
+			expect(client).toBeInstanceOf(HttpClient)
+		})
+
+		it('should create HttpClient with configuration', () => {
+			const client = new HttpClient({
+				baseUrl: 'https://api.example.com',
+				timeout: 10000,
+			})
+
+			const config = client.getConfig()
+			expect(config.baseUrl).toBe('https://api.example.com')
+			expect(config.timeout).toBe(10000)
+		})
+	})
+
+	describe('createHttpClient factory', () => {
+		it('should export createHttpClient function', () => {
+			expect(createHttpClient).toBeDefined()
+			expect(typeof createHttpClient).toBe('function')
+		})
+
+		it('should create HttpClient instance', () => {
+			const client = createHttpClient()
+			expect(client).toBeInstanceOf(HttpClient)
 		})
 
 		it('should create client with provided options', () => {
-			const options = {
-				apiKey: 'test-key',
+			const client = createHttpClient({
 				baseUrl: 'https://api.example.com',
-			}
-			const client = createClient(options)
+				timeout: 5000,
+				defaultHeaders: { 'X-API-Key': 'test' },
+			})
 
-			expect(client).toBeDefined()
-			expect(client.apiKey).toBe('test-key')
-			expect(client.baseUrl).toBe('https://api.example.com')
-		})
-
-		it('should create client with partial options', () => {
-			const client = createClient({ apiKey: 'test-key' })
-
-			expect(client).toBeDefined()
-			expect(client.apiKey).toBe('test-key')
-			expect(client.baseUrl).toBeUndefined()
+			const config = client.getConfig()
+			expect(config.baseUrl).toBe('https://api.example.com')
+			expect(config.timeout).toBe(5000)
+			expect(config.defaultHeaders).toHaveProperty('X-API-Key', 'test')
 		})
 	})
 
-	describe('validateConfig', () => {
-		it('should validate valid config object', () => {
-			const config = {
-				apiKey: 'test',
-				baseUrl: 'https://api.example.com',
-			}
-
-			expect(validateConfig(config)).toBe(true)
+	describe('createCrudOperations factory', () => {
+		it('should export createCrudOperations function', () => {
+			expect(createCrudOperations).toBeDefined()
+			expect(typeof createCrudOperations).toBe('function')
 		})
 
-		it('should reject invalid config', () => {
-			expect(validateConfig(null)).toBe(false)
-			expect(validateConfig('string')).toBe(false)
-			expect(validateConfig(123)).toBe(false)
-			expect(validateConfig([])).toBe(false)
-		})
-	})
-
-	describe('processData', () => {
-		it('should process empty array', async () => {
-			const result = await processData([])
-
-			expect(result).toEqual([])
-		})
-
-		it('should process data array and add metadata', async () => {
-			const inputData = [
-				{ id: 1, name: 'test1' },
-				{ id: 2, name: 'test2' },
-			]
-
-			const result = await processData(inputData)
-
-			expect(result).toHaveLength(2)
-			expect(result[0]).toEqual({
-				id: 1,
-				name: 'test1',
-				processed: true,
-				timestamp: expect.any(Number),
+		it('should create CRUD operations instance', () => {
+			const mockClient = new HttpClient()
+			const crud = createCrudOperations(mockClient, {
+				endpoint: '/users',
 			})
-			expect(result[1]).toEqual({
-				id: 2,
-				name: 'test2',
-				processed: true,
-				timestamp: expect.any(Number),
-			})
-		})
 
-		it('should handle data processing errors', async () => {
-			// This would need to be a more specific test case based on your actual error scenarios
-			// For now, we'll test the basic structure
-			const inputData = [{ id: 1 }]
-
-			const result = await processData(inputData)
-			expect(result[0]).toHaveProperty('processed', true)
+			expect(crud).toBeDefined()
 		})
 	})
 })

@@ -91,39 +91,32 @@ export interface HttpResponse<T = unknown> {
 }
 
 /**
- * Pagination parameters for list requests
+ * Pagination parameters
  */
 export interface PaginationParams {
-	/** Page number (1-based) */
 	page?: number
-	/** Number of items per page */
 	limit?: number
-	/** Sort field and direction (e.g., 'created_at:desc') */
-	sort?: string
-	/** Search query */
-	search?: string
-	/** Additional filters */
-	filters?: Record<string, unknown>
+	offset?: number
+	cursor?: string
+	sortBy?: string
+	sortOrder?: 'asc' | 'desc'
 }
 
 /**
  * Paginated response structure
  */
 export interface PaginatedResponse<T> {
-	/** Array of items for current page */
-	items: T[]
-	/** Current page number */
-	page: number
-	/** Items per page */
-	limit: number
-	/** Total number of items */
-	total: number
-	/** Total number of pages */
-	totalPages: number
-	/** Whether there are more pages */
-	hasNext: boolean
-	/** Whether there are previous pages */
-	hasPrev: boolean
+	data: T[]
+	pagination: {
+		page: number
+		limit: number
+		total: number
+		totalPages: number
+		hasNext: boolean
+		hasPrev: boolean
+		nextCursor?: string
+		prevCursor?: string
+	}
 }
 
 /**
