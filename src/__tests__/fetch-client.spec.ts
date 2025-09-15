@@ -10,15 +10,6 @@ import { isHttpError, isNetworkError } from '@/types/errors.js'
 
 import type { RequestConfig } from '@/types/fetch.js'
 
-// Mock logger to avoid noise in tests
-vi.mock('@/utils/logger.js', () => ({
-	apiLogger: {
-		info: vi.fn(),
-	},
-	logError: vi.fn(),
-	logApiResponse: vi.fn(),
-}))
-
 // Mock fetch globally
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)

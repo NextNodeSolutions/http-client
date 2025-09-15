@@ -19,13 +19,6 @@ import {
 } from '@/lib/errors.js'
 import { ErrorSeverity } from '@/types/errors.js'
 
-// Mock logger to avoid noise in tests
-vi.mock('@/utils/logger.js', () => ({
-	apiLogger: {
-		info: vi.fn(),
-	},
-}))
-
 describe('Retry Logic', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()

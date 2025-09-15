@@ -14,17 +14,6 @@ import {
 	logError,
 } from '../utils/logger.js'
 
-// Mock @nextnode/logger
-vi.mock('@nextnode/logger', () => ({
-	createLogger: vi.fn(
-		(): { info: () => void; warn: () => void; error: () => void } => ({
-			info: vi.fn(),
-			warn: vi.fn(),
-			error: vi.fn(),
-		}),
-	),
-}))
-
 describe('Logger Utilities', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()

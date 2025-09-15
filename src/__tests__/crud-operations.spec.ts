@@ -15,17 +15,6 @@ import type {
 } from '@/lib/crud/operations.js'
 import type { HttpResponse } from '@/types/fetch.js'
 
-// Mock logger to avoid noise in tests
-vi.mock('@/utils/logger.js', () => ({
-	coreLogger: {
-		info: vi.fn(),
-	},
-	apiLogger: {
-		info: vi.fn(),
-	},
-	logError: vi.fn(),
-}))
-
 // Test resource type
 interface TestUser extends BaseResource {
 	id: string

@@ -10,17 +10,6 @@ import {
 	createCrudOperations,
 } from '../lib/core.js'
 
-// Mock the logger
-vi.mock('../utils/logger.js', () => ({
-	coreLogger: {
-		info: vi.fn(),
-	},
-	apiLogger: {
-		info: vi.fn(),
-	},
-	logError: vi.fn(),
-}))
-
 describe('Core Library Exports', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
