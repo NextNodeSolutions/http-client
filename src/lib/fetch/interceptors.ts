@@ -387,7 +387,171 @@ export const developmentInterceptors = {
 }
 
 /**
- * Utility function to create interceptor chains
+ * Interceptor chain manager for better organization
+ */
+export class InterceptorChain {
+	private requestInterceptors: RequestInterceptor[] = []
+	private responseInterceptors: ResponseInterceptor[] = []
+	private errorInterceptors: ErrorInterceptor[] = []
+
+	/**
+	 * Add request interceptor
+	 */
+	addRequest(interceptor: RequestInterceptor): this {
+		this.requestInterceptors.push(interceptor)
+		return this
+	}
+
+	/**
+	 * Add response interceptor
+	 */
+	addResponse<T = unknown>(interceptor: ResponseInterceptor<T>): this {
+		this.responseInterceptors.push(
+			interceptor as ResponseInterceptor<unknown>,
+		)
+		return this
+	}
+
+	/**
+	 * Add error interceptor
+	 */
+	addError(interceptor: ErrorInterceptor): this {
+		this.errorInterceptors.push(interceptor)
+		return this
+	}
+
+	/**
+	 * Execute request interceptor chain
+	 */
+	async executeRequest(
+		config: RequestConfig,
+		url: string,
+	): Promise<RequestConfig> {
+		let modifiedConfig = config
+
+		for (const interceptor of this.requestInterceptors) {
+			try {
+				modifiedConfig = await interceptor(modifiedConfig, url)
+			} catch (error) {
+				apiLogger.info('Request interceptor failed', {
+					details: {
+						error: (error as Error).message,
+						url,
+						interceptorIndex:
+							this.requestInterceptors.indexOf(interceptor),
+					},
+				})
+				throw error
+			}
+		}
+
+		return modifiedConfig
+	}
+
+	/**
+	 * Execute response interceptor chain
+	 */
+	async executeResponse<T>(
+		response: HttpResponse<T>,
+	): Promise<HttpResponse<T>> {
+		let modifiedResponse = response
+
+		for (const interceptor of this.responseInterceptors) {
+			try {
+				modifiedResponse = (await interceptor(
+					modifiedResponse,
+				)) as HttpResponse<T>
+			} catch (error) {
+				apiLogger.info('Response interceptor failed', {
+					details: {
+						error: (error as Error).message,
+						url: response.raw.url,
+						interceptorIndex:
+							this.responseInterceptors.indexOf(interceptor),
+					},
+				})
+				throw error
+			}
+		}
+
+		return modifiedResponse
+	}
+
+	/**
+	 * Execute error interceptor chain
+	 */
+	async executeError(
+		error: Error,
+		config: RequestConfig,
+		url: string,
+	): Promise<Error> {
+		let modifiedError = error
+
+		for (const interceptor of this.errorInterceptors) {
+			try {
+				modifiedError = await interceptor(modifiedError, config, url)
+			} catch (interceptorError) {
+				apiLogger.info('Error interceptor failed', {
+					details: {
+						originalError: error.message,
+						interceptorError: (interceptorError as Error).message,
+						url,
+						interceptorIndex:
+							this.errorInterceptors.indexOf(interceptor),
+					},
+				})
+				// Return original error if interceptor fails
+				return error
+			}
+		}
+
+		return modifiedError
+	}
+
+	/**
+	 * Clear all interceptors
+	 */
+	clear(): this {
+		this.requestInterceptors = []
+		this.responseInterceptors = []
+		this.errorInterceptors = []
+		return this
+	}
+
+	/**
+	 * Get interceptor counts for debugging
+	 */
+	getStats(): {
+		request: number
+		response: number
+		error: number
+		total: number
+	} {
+		return {
+			request: this.requestInterceptors.length,
+			response: this.responseInterceptors.length,
+			error: this.errorInterceptors.length,
+			total:
+				this.requestInterceptors.length +
+				this.responseInterceptors.length +
+				this.errorInterceptors.length,
+		}
+	}
+
+	/**
+	 * Create a copy of this chain
+	 */
+	clone(): InterceptorChain {
+		const chain = new InterceptorChain()
+		chain.requestInterceptors = [...this.requestInterceptors]
+		chain.responseInterceptors = [...this.responseInterceptors]
+		chain.errorInterceptors = [...this.errorInterceptors]
+		return chain
+	}
+}
+
+/**
+ * Utility function to create interceptor chains (legacy compatibility)
  */
 export const createInterceptorChain = <
 	T extends (...args: unknown[]) => unknown,

@@ -78,19 +78,12 @@ export class CrudOperations<T extends BaseResource> {
 	}
 
 	/**
-	 * Create a new resource
+	 * Validate and transform data if options are provided
 	 */
-	async create(
-		data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
-		options: CrudOptions = {},
-	): Promise<Result<T, HttpClientError | ValidationError>> {
-		coreLogger.info('Creating resource', {
-			details: {
-				endpoint: this.config.endpoint,
-				hasData: Boolean(data),
-			},
-		})
-
+	private validateAndTransform<U>(
+		data: U,
+		options: CrudOptions,
+	): Result<unknown, ValidationError> {
 		// Validation
 		if (options.validate) {
 			const validationError = options.validate(data)
@@ -104,12 +97,71 @@ export class CrudOperations<T extends BaseResource> {
 			? options.transform(data)
 			: data
 
+		return success(transformedData)
+	}
+
+	/**
+	 * Build HTTP options with headers
+	 */
+	private buildHttpOptions(options: CrudOptions): {
+		headers?: Record<string, string>
+	} {
+		return {
+			...(options.headers && { headers: options.headers }),
+		}
+	}
+
+	/**
+	 * Log operation start
+	 */
+	private logOperationStart(
+		operation: string,
+		details: Record<string, unknown>,
+	): void {
+		coreLogger.info(`${operation} operation started`, {
+			details: {
+				endpoint: this.config.endpoint,
+				...details,
+			},
+		})
+	}
+
+	/**
+	 * Log operation success
+	 */
+	private logOperationSuccess(
+		operation: string,
+		details: Record<string, unknown>,
+	): void {
+		coreLogger.info(`${operation} operation completed successfully`, {
+			details: {
+				endpoint: this.config.endpoint,
+				...details,
+			},
+		})
+	}
+
+	/**
+	 * Create a new resource
+	 */
+	async create(
+		data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
+		options: CrudOptions = {},
+	): Promise<Result<T, HttpClientError | ValidationError>> {
+		this.logOperationStart('Create', { hasData: Boolean(data) })
+
+		const [validationError, transformedData] = this.validateAndTransform(
+			data,
+			options,
+		)
+		if (validationError) {
+			return failure(validationError)
+		}
+
 		const [error, response] = await this.httpClient.post<T>(
 			this.config.endpoint,
 			transformedData,
-			{
-				...(options.headers && { headers: options.headers }),
-			},
+			this.buildHttpOptions(options),
 		)
 
 		if (error) {
@@ -119,11 +171,8 @@ export class CrudOperations<T extends BaseResource> {
 		// Clear relevant cache entries
 		this.clearCacheByPattern(this.config.endpoint)
 
-		coreLogger.info('Resource created successfully', {
-			details: {
-				endpoint: this.config.endpoint,
-				resourceId: response?.data[this.config.idField! as keyof T],
-			},
+		this.logOperationSuccess('Create', {
+			resourceId: response?.data[this.config.idField! as keyof T],
 		})
 
 		return success(response!.data)
@@ -139,12 +188,7 @@ export class CrudOperations<T extends BaseResource> {
 		const cacheKey = `${this.config.endpoint}/${id}`
 		const url = `${this.config.endpoint}/${id}`
 
-		coreLogger.info('Reading resource', {
-			details: {
-				endpoint: this.config.endpoint,
-				resourceId: id,
-			},
-		})
+		this.logOperationStart('Read', { resourceId: id })
 
 		// Check cache first
 		if (!options.skipCache) {
@@ -157,9 +201,10 @@ export class CrudOperations<T extends BaseResource> {
 			}
 		}
 
-		const [error, response] = await this.httpClient.get<T>(url, {
-			...(options.headers && { headers: options.headers }),
-		})
+		const [error, response] = await this.httpClient.get<T>(
+			url,
+			this.buildHttpOptions(options),
+		)
 
 		if (error) {
 			return failure(error)
@@ -170,12 +215,7 @@ export class CrudOperations<T extends BaseResource> {
 			this.setCache(cacheKey, response!.data, options.cacheTtl)
 		}
 
-		coreLogger.info('Resource read successfully', {
-			details: {
-				endpoint: this.config.endpoint,
-				resourceId: id,
-			},
-		})
+		this.logOperationSuccess('Read', { resourceId: id })
 
 		return success(response!.data)
 	}
@@ -236,9 +276,7 @@ export class CrudOperations<T extends BaseResource> {
 		const url = `${this.config.endpoint}?${queryParams.toString()}`
 		const [error, response] = await this.httpClient.get<
 			PaginatedResponse<T>
-		>(url, {
-			...(options.headers && { headers: options.headers }),
-		})
+		>(url, this.buildHttpOptions(options))
 
 		if (error) {
 			return failure(error)
@@ -270,33 +308,23 @@ export class CrudOperations<T extends BaseResource> {
 	): Promise<Result<T, HttpClientError | ValidationError>> {
 		const url = `${this.config.endpoint}/${id}`
 
-		coreLogger.info('Updating resource', {
-			details: {
-				endpoint: this.config.endpoint,
-				resourceId: id,
-				hasData: Boolean(data),
-			},
+		this.logOperationStart('Update', {
+			resourceId: id,
+			hasData: Boolean(data),
 		})
 
-		// Validation
-		if (options.validate) {
-			const validationError = options.validate(data)
-			if (validationError) {
-				return failure(validationError)
-			}
+		const [validationError, transformedData] = this.validateAndTransform(
+			data,
+			options,
+		)
+		if (validationError) {
+			return failure(validationError)
 		}
-
-		// Transform data if needed
-		const transformedData = options.transform
-			? options.transform(data)
-			: data
 
 		const [error, response] = await this.httpClient.put<T>(
 			url,
 			transformedData,
-			{
-				...(options.headers && { headers: options.headers }),
-			},
+			this.buildHttpOptions(options),
 		)
 
 		if (error) {
@@ -307,12 +335,7 @@ export class CrudOperations<T extends BaseResource> {
 		this.clearCacheByPattern(`${this.config.endpoint}/${id}`)
 		this.clearCacheByPattern(this.config.endpoint)
 
-		coreLogger.info('Resource updated successfully', {
-			details: {
-				endpoint: this.config.endpoint,
-				resourceId: id,
-			},
-		})
+		this.logOperationSuccess('Update', { resourceId: id })
 
 		return success(response!.data)
 	}
@@ -335,25 +358,18 @@ export class CrudOperations<T extends BaseResource> {
 			},
 		})
 
-		// Validation
-		if (options.validate) {
-			const validationError = options.validate(data)
-			if (validationError) {
-				return failure(validationError)
-			}
+		const [validationError, transformedData] = this.validateAndTransform(
+			data,
+			options,
+		)
+		if (validationError) {
+			return failure(validationError)
 		}
-
-		// Transform data if needed
-		const transformedData = options.transform
-			? options.transform(data)
-			: data
 
 		const [error, response] = await this.httpClient.patch<T>(
 			url,
 			transformedData,
-			{
-				...(options.headers && { headers: options.headers }),
-			},
+			this.buildHttpOptions(options),
 		)
 
 		if (error) {
@@ -390,9 +406,10 @@ export class CrudOperations<T extends BaseResource> {
 			},
 		})
 
-		const [error] = await this.httpClient.delete(url, {
-			...(options.headers && { headers: options.headers }),
-		})
+		const [error] = await this.httpClient.delete(
+			url,
+			this.buildHttpOptions(options),
+		)
 
 		if (error) {
 			return failure(error)
@@ -428,27 +445,21 @@ export class CrudOperations<T extends BaseResource> {
 			},
 		})
 
-		// Validation
-		if (options.validate) {
-			for (const item of items) {
-				const validationError = options.validate(item)
-				if (validationError) {
-					return failure(validationError)
-				}
+		// Validation and transformation for each item
+		const transformedItems: unknown[] = []
+		for (const item of items) {
+			const [validationError, transformedData] =
+				this.validateAndTransform(item, options)
+			if (validationError) {
+				return failure(validationError)
 			}
+			transformedItems.push(transformedData)
 		}
-
-		// Transform data if needed
-		const transformedData = options.transform
-			? items.map(item => options.transform!(item))
-			: items
 
 		const [error, response] = await this.httpClient.post<T[]>(
 			url,
-			transformedData,
-			{
-				...(options.headers && { headers: options.headers }),
-			},
+			transformedItems,
+			this.buildHttpOptions(options),
 		)
 
 		if (error) {
@@ -484,30 +495,27 @@ export class CrudOperations<T extends BaseResource> {
 			},
 		})
 
-		// Validation
-		if (options.validate) {
-			for (const update of updates) {
-				const validationError = options.validate(update.data)
-				if (validationError) {
-					return failure(validationError)
-				}
+		// Validation and transformation for each update
+		const transformedUpdates: Array<{
+			id: string | number
+			data: unknown
+		}> = []
+		for (const update of updates) {
+			const [validationError, transformedData] =
+				this.validateAndTransform(update.data, options)
+			if (validationError) {
+				return failure(validationError)
 			}
+			transformedUpdates.push({
+				id: update.id,
+				data: transformedData,
+			})
 		}
-
-		// Transform data if needed
-		const transformedData = options.transform
-			? updates.map(update => ({
-					...update,
-					data: options.transform!(update.data),
-				}))
-			: updates
 
 		const [error, response] = await this.httpClient.put<T[]>(
 			url,
-			transformedData,
-			{
-				...(options.headers && { headers: options.headers }),
-			},
+			transformedUpdates,
+			this.buildHttpOptions(options),
 		)
 
 		if (error) {
@@ -543,7 +551,7 @@ export class CrudOperations<T extends BaseResource> {
 		const [error] = await this.httpClient.request(url, {
 			method: 'DELETE',
 			body: { ids },
-			...(options.headers && { headers: options.headers }),
+			...this.buildHttpOptions(options),
 		})
 
 		if (error) {
@@ -579,31 +587,39 @@ export class CrudOperations<T extends BaseResource> {
 		keys: string[]
 		oldestEntry?: { key: string; age: number }
 	} {
-		const keys = Array.from(this.cache.keys())
-		let oldestEntry: { key: string; age: number } | undefined
+		const keys: string[] = []
+		let oldestTime = Date.now()
+		let oldestKey = ''
+		let hasEntries = false
 
-		if (keys.length > 0) {
-			let oldestTime = Date.now()
-			let oldestKey = keys[0]!
+		// Single pass through cache entries
+		for (const [key, value] of this.cache) {
+			keys.push(key)
+			hasEntries = true
 
-			for (const [key, value] of this.cache) {
-				if (value.timestamp < oldestTime) {
-					oldestTime = value.timestamp
-					oldestKey = key
-				}
+			if (value.timestamp < oldestTime) {
+				oldestTime = value.timestamp
+				oldestKey = key
 			}
+		}
 
-			oldestEntry = {
+		const result: {
+			size: number
+			keys: string[]
+			oldestEntry?: { key: string; age: number }
+		} = {
+			size: this.cache.size,
+			keys,
+		}
+
+		if (hasEntries) {
+			result.oldestEntry = {
 				key: oldestKey,
 				age: Date.now() - oldestTime,
 			}
 		}
 
-		return {
-			size: this.cache.size,
-			keys,
-			...(oldestEntry && { oldestEntry }),
-		}
+		return result
 	}
 
 	/**
