@@ -3,8 +3,6 @@
  * @module lib/interceptors/chain
  */
 
-import { interceptorLogger } from '../../utils/logger.js'
-
 import type {
 	AfterResponseInterceptor,
 	ErrorContext,
@@ -13,6 +11,7 @@ import type {
 	RequestContext,
 	ResponseContext,
 } from '../../types/index.js'
+import { interceptorLogger } from '../../utils/logger.js'
 
 /**
  * Interceptor chain interface
@@ -22,7 +21,7 @@ export interface InterceptorChain {
 		context: RequestContext,
 	): Promise<RequestContext | HttpResult<unknown>>
 	runAfterResponse<T>(context: ResponseContext<T>): Promise<T>
-	runOnError(context: ErrorContext): Promise<HttpResult<unknown> | void>
+	runOnError(context: ErrorContext): Promise<HttpResult<unknown> | undefined>
 }
 
 /**
@@ -109,7 +108,7 @@ export const createInterceptorChain = (
 	 */
 	const runOnError = async (
 		context: ErrorContext,
-	): Promise<HttpResult<unknown> | void> => {
+	): Promise<HttpResult<unknown> | undefined> => {
 		for (const interceptor of onError) {
 			if (debug) {
 				interceptorLogger.info('Running onError interceptor', {

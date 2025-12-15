@@ -3,18 +3,17 @@
  * @module lib/client/request-builder
  */
 
+import type {
+	HttpClientConfig,
+	RequestConfig,
+	RequestContext,
+} from '../../types/index.js'
 import {
 	buildUrl,
 	createJsonHeaders,
 	generateRequestId,
 	mergeHeaders,
 } from '../../utils/index.js'
-
-import type {
-	HttpClientConfig,
-	RequestConfig,
-	RequestContext,
-} from '../../types/index.js'
 
 /**
  * Build request context from config and options

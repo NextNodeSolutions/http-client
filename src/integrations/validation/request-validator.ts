@@ -5,9 +5,10 @@
 
 import type {
 	Schema,
-	ValidationResult,
 	ValidationIssue,
+	ValidationResult,
 } from '@nextnode/validation'
+
 import type { HttpError, HttpResult } from '../../types/index.js'
 
 /**

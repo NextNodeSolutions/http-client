@@ -3,16 +3,15 @@
  * @module lib/client/fetch-executor
  */
 
-import { createHttpError, mapFetchError } from '../errors/index.js'
-import { isJsonContentType } from '../../utils/headers.js'
-import { logHttpError, logRequest, logResponse } from '../../utils/logger.js'
-
 import type {
 	HttpClientConfig,
 	HttpResult,
 	RequestContext,
 	ResponseMeta,
 } from '../../types/index.js'
+import { isJsonContentType } from '../../utils/headers.js'
+import { logHttpError, logRequest, logResponse } from '../../utils/logger.js'
+import { createHttpError, mapFetchError } from '../errors/index.js'
 
 /**
  * Execute fetch request and return HttpResult

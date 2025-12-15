@@ -3,8 +3,8 @@
  * @module types/response
  */
 
-import type { HttpError, ResponseMeta } from './result.js'
 import type { RequestContext } from './request.js'
+import type { HttpError, ResponseMeta } from './result.js'
 
 /**
  * Response context for interceptors

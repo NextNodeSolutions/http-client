@@ -3,11 +3,13 @@
  * @module lib/cache
  */
 
-import { createDeduplicator, type Deduplicator } from './deduplicator.js'
-import { createLRUCache, type LRUCache } from './lru-cache.js'
-import { createSWRCache, type SWRCache } from './swr-cache.js'
-
 import type { CacheConfig, HttpMethod } from '../../types/index.js'
+import type { Deduplicator } from './deduplicator.js'
+import { createDeduplicator } from './deduplicator.js'
+import type { LRUCache } from './lru-cache.js'
+import { createLRUCache } from './lru-cache.js'
+import type { SWRCache } from './swr-cache.js'
+import { createSWRCache } from './swr-cache.js'
 
 export { generateCacheKey } from './cache-key.js'
 export { createDeduplicator, type Deduplicator } from './deduplicator.js'

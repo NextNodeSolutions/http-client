@@ -40,20 +40,20 @@ import { createHttpClient } from '@nextnode/http-client'
 
 // Create a configured client
 const api = createHttpClient({
-  baseUrl: 'https://api.example.com',
-  timeout: 30000,
-  cache: { maxEntries: 100, ttl: 60000 },
-  retry: { maxRetries: 3 }
+	baseUrl: 'https://api.example.com',
+	timeout: 30000,
+	cache: { maxEntries: 100, ttl: 60000 },
+	retry: { maxRetries: 3 },
 })
 
 // Make requests
 const result = await api.get<User>('/users/123')
 
 if (result.success) {
-  console.log(result.data.name)
-  console.log(result.response.cached) // true/false
+	console.log(result.data.name)
+	console.log(result.response.cached) // true/false
 } else {
-  console.error(result.error.code) // 'CLIENT_ERROR', 'NETWORK_ERROR', etc.
+	console.error(result.error.code) // 'CLIENT_ERROR', 'NETWORK_ERROR', etc.
 }
 ```
 
@@ -66,13 +66,18 @@ if (result.success) {
 const users = await api.get<User[]>('/users')
 
 // POST with body
-const newUser = await api.post<User>('/users', { name: 'John', email: 'john@example.com' })
+const newUser = await api.post<User>('/users', {
+	name: 'John',
+	email: 'john@example.com',
+})
 
 // PUT request
 const updated = await api.put<User>('/users/123', { name: 'John Updated' })
 
 // PATCH request
-const patched = await api.patch<User>('/users/123', { email: 'newemail@example.com' })
+const patched = await api.patch<User>('/users/123', {
+	email: 'newemail@example.com',
+})
 
 // DELETE request
 const deleted = await api.delete('/users/123')
@@ -85,7 +90,7 @@ const head = await api.head('/users/123')
 
 ```typescript
 const result = await api.get<User[]>('/users', {
-  params: { page: 1, limit: 10, active: true }
+	params: { page: 1, limit: 10, active: true },
 })
 // Fetches: /users?page=1&limit=10&active=true
 ```
@@ -120,15 +125,15 @@ const result = await api.noRetry().post('/payments', paymentData)
 ```typescript
 // Create separate clients for different services
 export const stripeApi = createHttpClient({
-  baseUrl: 'https://api.stripe.com/v1',
-  headers: { Authorization: 'Bearer sk_live_...' }
+	baseUrl: 'https://api.stripe.com/v1',
+	headers: { Authorization: 'Bearer sk_live_...' },
 })
 
 export const internalApi = createHttpClient({
-  baseUrl: 'https://api.myapp.com',
-  timeout: 30000,
-  cache: { maxEntries: 100, ttl: 60000 },
-  retry: { maxRetries: 3 }
+	baseUrl: 'https://api.myapp.com',
+	timeout: 30000,
+	cache: { maxEntries: 100, ttl: 60000 },
+	retry: { maxRetries: 3 },
 })
 ```
 
@@ -138,12 +143,12 @@ export const internalApi = createHttpClient({
 
 ```typescript
 const api = createHttpClient({
-  cache: {
-    maxEntries: 100,        // Max cached responses
-    ttl: 60000,             // Time-to-live in ms
-    staleWhileRevalidate: 30000,  // Serve stale, revalidate in background
-    deduplicate: true       // Prevent duplicate in-flight requests
-  }
+	cache: {
+		maxEntries: 100, // Max cached responses
+		ttl: 60000, // Time-to-live in ms
+		staleWhileRevalidate: 30000, // Serve stale, revalidate in background
+		deduplicate: true, // Prevent duplicate in-flight requests
+	},
 })
 ```
 
@@ -175,17 +180,17 @@ const fresh = await api.noCache().get('/data')
 
 ```typescript
 const api = createHttpClient({
-  retry: {
-    maxRetries: 3,          // Max retry attempts
-    baseDelay: 1000,        // Initial delay in ms
-    maxDelay: 30000,        // Max delay between retries
-    jitter: 0.1,            // Random jitter factor (0-1)
-    retryOn: [408, 429, 500, 502, 503, 504],  // Status codes to retry
-    shouldRetry: (error, attempt) => {
-      // Custom retry condition
-      return error.code === 'NETWORK_ERROR' && attempt < 3
-    }
-  }
+	retry: {
+		maxRetries: 3, // Max retry attempts
+		baseDelay: 1000, // Initial delay in ms
+		maxDelay: 30000, // Max delay between retries
+		jitter: 0.1, // Random jitter factor (0-1)
+		retryOn: [408, 429, 500, 502, 503, 504], // Status codes to retry
+		shouldRetry: (error, attempt) => {
+			// Custom retry condition
+			return error.code === 'NETWORK_ERROR' && attempt < 3
+		},
+	},
 })
 ```
 
@@ -194,7 +199,7 @@ const api = createHttpClient({
 ```typescript
 // Custom retry for this request
 const result = await api.get('/flaky-endpoint', {
-  retry: { maxRetries: 5, baseDelay: 2000 }
+	retry: { maxRetries: 5, baseDelay: 2000 },
 })
 
 // Disable retry for this request
@@ -205,36 +210,38 @@ const result = await api.get('/data', { noRetry: true })
 
 ```typescript
 const api = createHttpClient({
-  baseUrl: 'https://api.example.com',
-  interceptors: {
-    // Modify requests before sending
-    beforeRequest: [
-      (ctx) => {
-        // Add auth from store
-        ctx.headers.set('Authorization', `Bearer ${authStore.token}`)
-        return ctx
-      }
-    ],
+	baseUrl: 'https://api.example.com',
+	interceptors: {
+		// Modify requests before sending
+		beforeRequest: [
+			ctx => {
+				// Add auth from store
+				ctx.headers.set('Authorization', `Bearer ${authStore.token}`)
+				return ctx
+			},
+		],
 
-    // Transform response data
-    afterResponse: [
-      (ctx) => {
-        console.log(`${ctx.request.method} ${ctx.request.url}: ${ctx.response.status}`)
-        return ctx.data
-      }
-    ],
+		// Transform response data
+		afterResponse: [
+			ctx => {
+				console.log(
+					`${ctx.request.method} ${ctx.request.url}: ${ctx.response.status}`,
+				)
+				return ctx.data
+			},
+		],
 
-    // Handle errors
-    onError: [
-      (ctx) => {
-        if (ctx.error.status === 401) {
-          authStore.logout()
-        }
-        // Return undefined to let error propagate
-        // Or return a result to recover
-      }
-    ]
-  }
+		// Handle errors
+		onError: [
+			ctx => {
+				if (ctx.error.status === 401) {
+					authStore.logout()
+				}
+				// Return undefined to let error propagate
+				// Or return a result to recover
+			},
+		],
+	},
 })
 ```
 
@@ -244,14 +251,14 @@ const api = createHttpClient({
 
 ```typescript
 type HttpErrorCode =
-  | 'NETWORK_ERROR'     // Network failure
-  | 'TIMEOUT_ERROR'     // Request timeout
-  | 'ABORT_ERROR'       // Request aborted
-  | 'PARSE_ERROR'       // JSON parse failure
-  | 'VALIDATION_ERROR'  // Schema validation failed
-  | 'CLIENT_ERROR'      // 4xx responses
-  | 'SERVER_ERROR'      // 5xx responses
-  | 'UNKNOWN_ERROR'
+	| 'NETWORK_ERROR' // Network failure
+	| 'TIMEOUT_ERROR' // Request timeout
+	| 'ABORT_ERROR' // Request aborted
+	| 'PARSE_ERROR' // JSON parse failure
+	| 'VALIDATION_ERROR' // Schema validation failed
+	| 'CLIENT_ERROR' // 4xx responses
+	| 'SERVER_ERROR' // 5xx responses
+	| 'UNKNOWN_ERROR'
 ```
 
 ### Handling Errors
@@ -260,22 +267,22 @@ type HttpErrorCode =
 const result = await api.get<User>('/users/123')
 
 if (!result.success) {
-  switch (result.error.code) {
-    case 'NETWORK_ERROR':
-      console.log('Check your connection')
-      break
-    case 'TIMEOUT_ERROR':
-      console.log('Request timed out')
-      break
-    case 'CLIENT_ERROR':
-      if (result.error.status === 404) {
-        console.log('User not found')
-      }
-      break
-    case 'SERVER_ERROR':
-      console.log('Server error, try again later')
-      break
-  }
+	switch (result.error.code) {
+		case 'NETWORK_ERROR':
+			console.log('Check your connection')
+			break
+		case 'TIMEOUT_ERROR':
+			console.log('Request timed out')
+			break
+		case 'CLIENT_ERROR':
+			if (result.error.status === 404) {
+				console.log('User not found')
+			}
+			break
+		case 'SERVER_ERROR':
+			console.log('Server error, try again later')
+			break
+	}
 }
 ```
 
@@ -289,24 +296,24 @@ import { s } from '@nextnode/validation'
 
 // Define schemas
 const userSchema = s.object({
-  id: s.number(),
-  name: s.string(),
-  email: s.email()
+	id: s.number(),
+	name: s.string(),
+	email: s.email(),
 })
 
 const createUserSchema = s.object({
-  name: s.string().min(1),
-  email: s.email()
+	name: s.string().min(1),
+	email: s.email(),
 })
 
 // Use with client
 const result = await api.post('/users', userData, {
-  bodySchema: createUserSchema,     // Validate request body
-  responseSchema: userSchema        // Validate response
+	bodySchema: createUserSchema, // Validate request body
+	responseSchema: userSchema, // Validate response
 })
 
 if (!result.success && result.error.code === 'VALIDATION_ERROR') {
-  console.log('Validation failed:', result.error.message)
+	console.log('Validation failed:', result.error.message)
 }
 ```
 
@@ -316,14 +323,14 @@ if (!result.success && result.error.code === 'VALIDATION_ERROR') {
 
 ```typescript
 interface HttpClientConfig {
-  baseUrl?: string              // Base URL for all requests
-  timeout?: number              // Default timeout in ms (default: 30000)
-  headers?: Record<string, string>  // Default headers
-  cache?: CacheConfig | false   // Cache config or false to disable
-  retry?: RetryConfig | false   // Retry config or false to disable
-  interceptors?: InterceptorConfig
-  credentials?: RequestCredentials  // 'omit' | 'same-origin' | 'include'
-  debug?: boolean               // Enable debug logging
+	baseUrl?: string // Base URL for all requests
+	timeout?: number // Default timeout in ms (default: 30000)
+	headers?: Record<string, string> // Default headers
+	cache?: CacheConfig | false // Cache config or false to disable
+	retry?: RetryConfig | false // Retry config or false to disable
+	interceptors?: InterceptorConfig
+	credentials?: RequestCredentials // 'omit' | 'same-origin' | 'include'
+	debug?: boolean // Enable debug logging
 }
 ```
 
@@ -331,11 +338,11 @@ interface HttpClientConfig {
 
 ```typescript
 interface CacheConfig {
-  maxEntries?: number           // Max cache entries (default: 100)
-  ttl?: number                  // TTL in ms (default: 60000)
-  staleWhileRevalidate?: number // SWR window in ms
-  deduplicate?: boolean         // Dedupe in-flight requests
-  keyGenerator?: (config: RequestConfig) => string  // Custom key generator
+	maxEntries?: number // Max cache entries (default: 100)
+	ttl?: number // TTL in ms (default: 60000)
+	staleWhileRevalidate?: number // SWR window in ms
+	deduplicate?: boolean // Dedupe in-flight requests
+	keyGenerator?: (config: RequestConfig) => string // Custom key generator
 }
 ```
 
@@ -343,12 +350,12 @@ interface CacheConfig {
 
 ```typescript
 interface RetryConfig {
-  maxRetries?: number           // Max retries (default: 3)
-  baseDelay?: number            // Base delay in ms (default: 1000)
-  maxDelay?: number             // Max delay in ms (default: 30000)
-  jitter?: number               // Jitter factor 0-1 (default: 0.1)
-  retryOn?: number[]            // Status codes to retry
-  shouldRetry?: (error: HttpError, attempt: number) => boolean
+	maxRetries?: number // Max retries (default: 3)
+	baseDelay?: number // Base delay in ms (default: 1000)
+	maxDelay?: number // Max delay in ms (default: 30000)
+	jitter?: number // Jitter factor 0-1 (default: 0.1)
+	retryOn?: number[] // Status codes to retry
+	shouldRetry?: (error: HttpError, attempt: number) => boolean
 }
 ```
 

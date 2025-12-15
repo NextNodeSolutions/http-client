@@ -24,40 +24,37 @@
 
 // Main factory
 export { createHttpClient } from './http-client.js'
-
+// Error utilities
+export { HttpErrorCodes } from './lib/errors/index.js'
 // Type exports
 export type {
-	// Client types
-	HttpClient,
-	HttpClientConfig,
-	// Request types
-	HttpMethod,
-	RequestConfig,
-	RequestContext,
-	RequestOptions,
-	// Response types
-	ErrorContext,
-	ResponseContext,
-	ResponseMeta,
-	// Result types
-	HttpError,
-	HttpErrorCode,
-	HttpResult,
-	// Cache types
-	CacheConfig,
-	CacheStats,
-	// Retry types
-	RetryConfig,
 	// Interceptor types
 	AfterResponseInterceptor,
 	BeforeRequestInterceptor,
+	// Cache types
+	CacheConfig,
+	CacheStats,
+	// Response types
+	ErrorContext,
+	// Client types
+	HttpClient,
+	HttpClientConfig,
+	// Result types
+	HttpError,
+	HttpErrorCode,
+	// Request types
+	HttpMethod,
+	HttpResult,
 	InterceptorConfig,
 	OnErrorInterceptor,
+	RequestConfig,
+	RequestContext,
+	RequestOptions,
+	ResponseContext,
+	ResponseMeta,
+	// Retry types
+	RetryConfig,
 } from './types/index.js'
-
-// Error utilities
-export { HttpErrorCodes } from './lib/errors/index.js'
-
 // Logger exports (for debugging)
 export {
 	cacheLogger,

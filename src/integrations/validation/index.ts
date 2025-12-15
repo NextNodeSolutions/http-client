@@ -31,7 +31,6 @@ export {
 	isValidatedBody,
 	validateRequestBody,
 } from './request-validator.js'
-
 export {
 	createResponseValidationError,
 	validateResponse,

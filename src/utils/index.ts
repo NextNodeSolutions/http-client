@@ -10,7 +10,6 @@ export {
 	isJsonContentType,
 	mergeHeaders,
 } from './headers.js'
-
 export {
 	cacheLogger,
 	clientLogger,
@@ -20,7 +19,5 @@ export {
 	logResponse,
 	retryLogger,
 } from './logger.js'
-
 export { buildQueryString, buildUrl } from './query-string.js'
-
 export { generateRequestId } from './request-id.js'

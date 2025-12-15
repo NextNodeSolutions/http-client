@@ -3,9 +3,8 @@
  * @module lib/errors/mapping
  */
 
-import { HttpErrorCodes, isClientError, isServerError } from './codes.js'
-
 import type { HttpError, HttpErrorCode } from '../../types/index.js'
+import { HttpErrorCodes, isClientError, isServerError } from './codes.js'
 
 /**
  * Simple error context for error creation

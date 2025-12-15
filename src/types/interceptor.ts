@@ -3,9 +3,9 @@
  * @module types/interceptor
  */
 
-import type { HttpResult } from './result.js'
 import type { RequestContext } from './request.js'
-import type { ResponseContext, ErrorContext } from './response.js'
+import type { ErrorContext, ResponseContext } from './response.js'
+import type { HttpResult } from './result.js'
 
 /**
  * Before request interceptor

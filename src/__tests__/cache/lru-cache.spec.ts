@@ -6,7 +6,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createLRUCache } from '../../lib/cache/lru-cache.js'
-
 import type { HttpResult } from '../../types/index.js'
 
 describe('createLRUCache', () => {

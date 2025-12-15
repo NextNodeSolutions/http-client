@@ -6,7 +6,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createHttpClient } from '../http-client.js'
-
 import type { HttpClient } from '../types/index.js'
 
 // Mock fetch globally

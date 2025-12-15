@@ -3,5 +3,5 @@
  * @module lib/client
  */
 
-export { buildRequestContext } from './request-builder.js'
 export { executeFetch } from './fetch-executor.js'
+export { buildRequestContext } from './request-builder.js'

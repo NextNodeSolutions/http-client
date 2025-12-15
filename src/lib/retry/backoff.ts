@@ -20,7 +20,7 @@ export const calculateBackoff = (
 	jitter: number,
 ): number => {
 	// Exponential backoff: baseDelay * 2^attempt
-	const exponentialDelay = baseDelay * Math.pow(2, attempt)
+	const exponentialDelay = baseDelay * 2 ** attempt
 
 	// Cap at maxDelay
 	const cappedDelay = Math.min(exponentialDelay, maxDelay)

@@ -3,31 +3,10 @@
  * @module types
  */
 
-// Result types
-export type {
-	HttpError,
-	HttpErrorCode,
-	HttpResult,
-	ResponseMeta,
-} from './result.js'
-
-// Request types
-export type {
-	HttpMethod,
-	RequestConfig,
-	RequestContext,
-	RequestOptions,
-} from './request.js'
-
-// Response types
-export type { ErrorContext, ResponseContext } from './response.js'
-
 // Cache types
 export type { CacheConfig, CacheEntry, CacheStats } from './cache.js'
-
-// Retry types
-export type { RetryConfig } from './retry.js'
-
+// Client types
+export type { HttpClient, HttpClientConfig } from './client.js'
 // Interceptor types
 export type {
 	AfterResponseInterceptor,
@@ -35,6 +14,21 @@ export type {
 	InterceptorConfig,
 	OnErrorInterceptor,
 } from './interceptor.js'
-
-// Client types
-export type { HttpClient, HttpClientConfig } from './client.js'
+// Request types
+export type {
+	HttpMethod,
+	RequestConfig,
+	RequestContext,
+	RequestOptions,
+} from './request.js'
+// Response types
+export type { ErrorContext, ResponseContext } from './response.js'
+// Result types
+export type {
+	HttpError,
+	HttpErrorCode,
+	HttpResult,
+	ResponseMeta,
+} from './result.js'
+// Retry types
+export type { RetryConfig } from './retry.js'

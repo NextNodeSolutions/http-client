@@ -30,8 +30,8 @@
 		"changeset:version": "changeset version",
 		"clean": "rm -rf dist",
 		"commitlint": "commitlint --edit",
-		"format": "biome check --write --no-errors-on-unmatched .",
-		"lint": "eslint . --max-warnings 0 --fix",
+		"format": "prettier --write .",
+		"lint": "biome check --write --no-errors-on-unmatched",
 		"lint-staged": "lint-staged",
 		"prepare": "husky",
 		"prepublishOnly": "pnpm build",
@@ -46,21 +46,20 @@
 		"@nextnode/logger": "^0.3.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.2.3",
+		"@biomejs/biome": "^2",
 		"@changesets/changelog-github": "^0.5.1",
-		"@changesets/cli": "^2.29.8",
-		"@commitlint/cli": "^19.8.1",
-		"@commitlint/config-conventional": "^19.1.0",
-		"@nextnode/eslint-plugin": "^1.2.0",
-		"@types/node": "^22.0.0",
-		"@vitest/coverage-v8": "^3.2.4",
-		"better-sort-package-json": "^1.1.1",
-		"eslint": "^9.27.0",
-		"husky": "^9.0.11",
-		"lint-staged": "^15.2.2",
+		"@changesets/cli": "^2.29.4",
+		"@commitlint/cli": "^19",
+		"@nextnode/standards": "^2.2.0",
+		"@types/node": "^22",
+		"@vitest/coverage-v8": "^3",
+		"better-sort-package-json": "^1",
+		"husky": "^9",
+		"lint-staged": "^16",
+		"prettier": "^3",
 		"tsup": "^8.5.1",
-		"typescript": "^5.0.0",
-		"vitest": "^3.2.4"
+		"typescript": "^5",
+		"vitest": "^3"
 	},
 	"peerDependencies": {
 		"@nextnode/validation": "^2.0.0"
@@ -86,6 +85,7 @@
 		}
 	},
 	"module": "./dist/index.js",
+	"prettier": "@nextnode/standards/prettier/core",
 	"sideEffects": false,
 	"types": "./dist/index.d.ts"
 }

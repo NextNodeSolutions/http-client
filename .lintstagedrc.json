@@ -1,5 +1,4 @@
 {
-	"src/**/*.{js,jsx,ts,tsx}": ["pnpm lint"],
 	"package.json": ["better-sort-package-json"],
-	"*": ["pnpm format"]
+	"*": ["pnpm lint", "pnpm format"]
 }

@@ -4,6 +4,7 @@
  */
 
 import type { Schema } from '@nextnode/validation'
+
 import type { RetryConfig } from './retry.js'
 
 /**

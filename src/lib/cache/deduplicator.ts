@@ -3,10 +3,9 @@
  * @module lib/cache/deduplicator
  */
 
+import type { HttpResult, RequestConfig } from '../../types/index.js'
 import { cacheLogger } from '../../utils/logger.js'
 import { generateCacheKey } from './cache-key.js'
-
-import type { HttpResult, RequestConfig } from '../../types/index.js'
 
 /**
  * Deduplicator interface

@@ -3,24 +3,20 @@
  * @module http-client
  */
 
-import { buildRequestContext, executeFetch } from './lib/client/index.js'
-import { createCacheSystem } from './lib/cache/index.js'
-import { createInterceptorChain } from './lib/interceptors/index.js'
-import { createRetryStrategy } from './lib/retry/index.js'
-import {
-	createBasicAuthHeader,
-	createBearerAuthHeader,
-} from './utils/headers.js'
+import type { Schema } from '@nextnode/validation'
+
 import {
 	isValidatedBody,
 	validateRequestBody,
 	validateResponse,
 } from './integrations/validation/index.js'
-
 import type { CacheSystem } from './lib/cache/index.js'
+import { createCacheSystem } from './lib/cache/index.js'
+import { buildRequestContext, executeFetch } from './lib/client/index.js'
 import type { InterceptorChain } from './lib/interceptors/index.js'
+import { createInterceptorChain } from './lib/interceptors/index.js'
 import type { RetryStrategy } from './lib/retry/index.js'
-import type { Schema } from '@nextnode/validation'
+import { createRetryStrategy } from './lib/retry/index.js'
 import type {
 	CacheConfig,
 	CacheStats,
@@ -34,6 +30,10 @@ import type {
 	ResponseContext,
 	RetryConfig,
 } from './types/index.js'
+import {
+	createBasicAuthHeader,
+	createBearerAuthHeader,
+} from './utils/headers.js'
 
 /**
  * Extract cache config object if available
@@ -98,9 +98,11 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 	 * Core fetch execution with interceptors and retry
 	 */
 	const executeCoreRequest = async <T>(
-		context: RequestContext,
+		initialContext: RequestContext,
 		requestConfig: RequestConfig,
 	): Promise<HttpResult<T>> => {
+		let context = initialContext
+
 		// Run beforeRequest interceptors
 		if (interceptorChain) {
 			const interceptorResult =
@@ -162,7 +164,7 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 			const recovery = await interceptorChain.runOnError(errorContext)
 
-			if (recovery && recovery.success) {
+			if (recovery?.success) {
 				return recovery as HttpResult<T>
 			}
 		}
@@ -174,8 +176,10 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 	 * Execute request with caching and validation
 	 */
 	const executeRequest = async <T>(
-		requestConfig: RequestConfig,
+		initialConfig: RequestConfig,
 	): Promise<HttpResult<T>> => {
+		let requestConfig = initialConfig
+
 		// Validate request body if schema provided
 		if (requestConfig.bodySchema && requestConfig.body !== undefined) {
 			const bodyValidation = validateRequestBody(

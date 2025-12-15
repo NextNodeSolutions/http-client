@@ -3,9 +3,6 @@
  * @module lib/cache/lru-cache
  */
 
-import { cacheLogger } from '../../utils/logger.js'
-import { generateCacheKey } from './cache-key.js'
-
 import type {
 	CacheConfig,
 	CacheEntry,
@@ -14,6 +11,8 @@ import type {
 	RequestConfig,
 	ResponseMeta,
 } from '../../types/index.js'
+import { cacheLogger } from '../../utils/logger.js'
+import { generateCacheKey } from './cache-key.js'
 
 /**
  * LRU Cache interface

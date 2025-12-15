@@ -8,7 +8,7 @@
  * Uses crypto.randomUUID if available, falls back to timestamp-based ID
  */
 export const generateRequestId = (): string => {
-	if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+	if (crypto?.randomUUID) {
 		return crypto.randomUUID()
 	}
 

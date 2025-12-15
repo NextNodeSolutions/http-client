@@ -3,11 +3,10 @@
  * @module lib/retry/strategy
  */
 
-import { RETRYABLE_STATUS_CODES } from '../errors/codes.js'
-import { retryLogger } from '../../utils/logger.js'
-import { calculateBackoff, sleep } from './backoff.js'
-
 import type { HttpError, HttpResult, RetryConfig } from '../../types/index.js'
+import { retryLogger } from '../../utils/logger.js'
+import { RETRYABLE_STATUS_CODES } from '../errors/codes.js'
+import { calculateBackoff, sleep } from './backoff.js'
 
 /**
  * Retry strategy interface
