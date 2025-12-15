@@ -5,44 +5,11 @@
 
 import { createLogger } from '@nextnode/logger'
 
-// Main HTTP client logger
-export const logger = createLogger()
-
 // Specialized loggers for subsystems
 export const clientLogger = createLogger({ prefix: 'HTTP' })
 export const cacheLogger = createLogger({ prefix: 'CACHE' })
 export const retryLogger = createLogger({ prefix: 'RETRY' })
 export const interceptorLogger = createLogger({ prefix: 'INTERCEPTOR' })
-export const validationLogger = createLogger({ prefix: 'VALIDATION' })
-
-/**
- * Sensitive headers that should never be logged
- */
-const SENSITIVE_HEADERS = new Set([
-	'authorization',
-	'cookie',
-	'set-cookie',
-	'x-api-key',
-	'x-auth-token',
-])
-
-/**
- * Sanitize headers for logging (remove sensitive values)
- */
-export const sanitizeHeaders = (
-	headers: Headers | Record<string, string>,
-): Record<string, string> => {
-	const result: Record<string, string> = {}
-	const entries =
-		headers instanceof Headers ? headers.entries() : Object.entries(headers)
-
-	for (const [key, value] of entries) {
-		const lowerKey = key.toLowerCase()
-		result[key] = SENSITIVE_HEADERS.has(lowerKey) ? '[REDACTED]' : value
-	}
-
-	return result
-}
 
 /**
  * Log HTTP request (sanitized)

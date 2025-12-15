@@ -26,7 +26,7 @@ export type { ErrorContext, ResponseContext } from './response.js'
 export type { CacheConfig, CacheEntry, CacheStats } from './cache.js'
 
 // Retry types
-export type { RetryConfig, RetryState } from './retry.js'
+export type { RetryConfig } from './retry.js'
 
 // Interceptor types
 export type {
@@ -37,8 +37,4 @@ export type {
 } from './interceptor.js'
 
 // Client types
-export type {
-	HttpClient,
-	HttpClientConfig,
-	ResolvedHttpClientConfig,
-} from './client.js'
+export type { HttpClient, HttpClientConfig } from './client.js'

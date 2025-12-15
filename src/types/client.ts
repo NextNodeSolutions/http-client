@@ -32,20 +32,6 @@ export interface HttpClientConfig {
 }
 
 /**
- * Internal configuration after applying defaults
- */
-export interface ResolvedHttpClientConfig {
-	readonly baseUrl: string
-	readonly timeout: number
-	readonly headers: Record<string, string>
-	readonly cache: CacheConfig | false
-	readonly retry: RetryConfig | false
-	readonly interceptors: InterceptorConfig
-	readonly credentials: RequestCredentials | undefined
-	readonly debug: boolean
-}
-
-/**
  * HTTP client instance interface
  */
 export interface HttpClient {

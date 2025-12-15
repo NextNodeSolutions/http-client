@@ -38,13 +38,25 @@ export const createJsonHeaders = (): Headers =>
 	})
 
 /**
+ * Validate that a value does not contain CR/LF characters (header injection prevention)
+ */
+const validateNoControlChars = (value: string, name: string): void => {
+	if (/[\r\n]/.test(value)) {
+		throw new Error(`${name} contains invalid control characters`)
+	}
+}
+
+/**
  * Create Authorization header with Bearer token
  */
 export const createBearerAuthHeader = (
 	token: string,
-): Record<string, string> => ({
-	Authorization: `Bearer ${token}`,
-})
+): Record<string, string> => {
+	validateNoControlChars(token, 'Token')
+	return {
+		Authorization: `Bearer ${token}`,
+	}
+}
 
 /**
  * Create Authorization header with Basic auth
@@ -53,6 +65,12 @@ export const createBasicAuthHeader = (
 	username: string,
 	password: string,
 ): Record<string, string> => {
+	if (username.includes(':')) {
+		throw new Error('Username cannot contain colon character')
+	}
+	validateNoControlChars(username, 'Username')
+	validateNoControlChars(password, 'Password')
+
 	const encoded = btoa(`${username}:${password}`)
 	return {
 		Authorization: `Basic ${encoded}`,

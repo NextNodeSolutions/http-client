@@ -4,6 +4,7 @@
  */
 
 import { cacheLogger } from '../../utils/logger.js'
+import { generateCacheKey } from './cache-key.js'
 
 import type { HttpResult, RequestConfig } from '../../types/index.js'
 import type { LRUCache } from './lru-cache.js'
@@ -47,7 +48,7 @@ export const createSWRCache = (cache: LRUCache, debug = false): SWRCache => {
 		}
 
 		// Stale cache - return stale data and revalidate in background
-		const key = JSON.stringify({ method: config.method, url: config.url })
+		const key = generateCacheKey(config)
 
 		if (!revalidating.has(key)) {
 			revalidating.add(key)

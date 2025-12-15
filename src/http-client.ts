@@ -4,12 +4,9 @@
  */
 
 import { buildRequestContext, executeFetch } from './lib/client/index.js'
-import { createCacheSystem, type CacheSystem } from './lib/cache/index.js'
-import {
-	createInterceptorChain,
-	type InterceptorChain,
-} from './lib/interceptors/index.js'
-import { createRetryStrategy, type RetryStrategy } from './lib/retry/index.js'
+import { createCacheSystem } from './lib/cache/index.js'
+import { createInterceptorChain } from './lib/interceptors/index.js'
+import { createRetryStrategy } from './lib/retry/index.js'
 import {
 	createBasicAuthHeader,
 	createBearerAuthHeader,
@@ -20,7 +17,12 @@ import {
 	validateResponse,
 } from './integrations/validation/index.js'
 
+import type { CacheSystem } from './lib/cache/index.js'
+import type { InterceptorChain } from './lib/interceptors/index.js'
+import type { RetryStrategy } from './lib/retry/index.js'
+import type { Schema } from '@nextnode/validation'
 import type {
+	CacheConfig,
 	CacheStats,
 	ErrorContext,
 	HttpClient,
@@ -32,7 +34,14 @@ import type {
 	ResponseContext,
 	RetryConfig,
 } from './types/index.js'
-import type { Schema } from '@nextnode/validation'
+
+/**
+ * Extract cache config object if available
+ */
+const getCacheConfig = (config: HttpClientConfig): CacheConfig | null => {
+	if (!config.cache || typeof config.cache !== 'object') return null
+	return config.cache
+}
 
 /**
  * Create an HTTP client instance
@@ -193,21 +202,15 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 		// Check cache first
 		if (shouldCache) {
+			const cacheConfig = getCacheConfig(config)
+
 			// Use SWR for stale-while-revalidate behavior
-			if (
-				config.cache &&
-				typeof config.cache === 'object' &&
-				config.cache.staleWhileRevalidate
-			) {
+			if (cacheConfig?.staleWhileRevalidate) {
 				return cacheSystem.swr.getWithRevalidation(
 					requestConfig,
 					async () => {
 						// Use deduplication for the actual fetch
-						if (
-							config.cache &&
-							typeof config.cache === 'object' &&
-							config.cache.deduplicate
-						) {
+						if (cacheConfig.deduplicate) {
 							return cacheSystem.deduplicator.dedupe(
 								requestConfig,
 								() =>
@@ -229,11 +232,7 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 			}
 
 			// Use deduplication if enabled
-			if (
-				config.cache &&
-				typeof config.cache === 'object' &&
-				config.cache.deduplicate
-			) {
+			if (cacheConfig?.deduplicate) {
 				const result = await cacheSystem.deduplicator.dedupe(
 					requestConfig,
 					() => executeCoreRequest<T>(context, requestConfig),

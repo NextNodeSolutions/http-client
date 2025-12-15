@@ -14,7 +14,6 @@ import type {
 	HttpClientConfig,
 	RequestConfig,
 	RequestContext,
-	RequestOptions,
 } from '../../types/index.js'
 
 /**
@@ -54,18 +53,3 @@ export const buildRequestContext = (
 
 	return context
 }
-
-/**
- * Create RequestConfig from HTTP method call
- */
-export const createRequestConfig = (
-	method: RequestConfig['method'],
-	url: string,
-	body: unknown | undefined,
-	options: RequestOptions | undefined,
-): RequestConfig => ({
-	method,
-	url,
-	body,
-	...options,
-})

@@ -10,9 +10,4 @@ export {
 	RETRYABLE_STATUS_CODES,
 } from './codes.js'
 
-export {
-	createHttpError,
-	createTimeoutError,
-	createValidationError,
-	mapFetchError,
-} from './mapping.js'
+export { createHttpError, mapFetchError } from './mapping.js'

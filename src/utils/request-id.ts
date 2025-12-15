@@ -13,7 +13,12 @@ export const generateRequestId = (): string => {
 	}
 
 	// Fallback for environments without crypto.randomUUID
+	// Uses crypto.getRandomValues for cryptographically secure random
 	const timestamp = Date.now().toString(36)
-	const random = Math.random().toString(36).substring(2, 10)
+	const array = new Uint8Array(8)
+	crypto.getRandomValues(array)
+	const random = Array.from(array, b => b.toString(16).padStart(2, '0')).join(
+		'',
+	)
 	return `${timestamp}-${random}`
 }

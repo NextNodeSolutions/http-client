@@ -7,7 +7,10 @@ import { HttpErrorCodes, isClientError, isServerError } from './codes.js'
 
 import type { HttpError, HttpErrorCode } from '../../types/index.js'
 
-interface ErrorContext {
+/**
+ * Simple error context for error creation
+ */
+interface ErrorMappingContext {
 	url?: string
 	method?: string
 	requestId?: string
@@ -18,7 +21,7 @@ interface ErrorContext {
  */
 export const mapFetchError = (
 	error: unknown,
-	context: ErrorContext,
+	context: ErrorMappingContext,
 ): HttpError => {
 	// AbortError (timeout or manual abort)
 	if (error instanceof DOMException && error.name === 'AbortError') {
@@ -71,7 +74,7 @@ export const mapFetchError = (
 export const createHttpError = (
 	status: number,
 	statusText: string,
-	context: ErrorContext & { body?: unknown },
+	context: ErrorMappingContext & { body?: unknown },
 ): HttpError => {
 	let code: HttpErrorCode
 
@@ -91,27 +94,3 @@ export const createHttpError = (
 		...context,
 	}
 }
-
-/**
- * Create a timeout error
- */
-export const createTimeoutError = (
-	timeout: number,
-	context: ErrorContext,
-): HttpError => ({
-	code: HttpErrorCodes.TIMEOUT_ERROR,
-	message: `Request timeout after ${timeout}ms`,
-	...context,
-})
-
-/**
- * Create a validation error from validation issues
- */
-export const createValidationError = (
-	issues: readonly { code: string }[],
-	context: ErrorContext,
-): HttpError => ({
-	code: HttpErrorCodes.VALIDATION_ERROR,
-	message: `Validation failed: ${issues.map(i => i.code).join(', ')}`,
-	...context,
-})

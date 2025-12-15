@@ -63,7 +63,5 @@ export {
 	cacheLogger,
 	clientLogger,
 	interceptorLogger,
-	logger,
 	retryLogger,
-	validationLogger,
 } from './utils/logger.js'
