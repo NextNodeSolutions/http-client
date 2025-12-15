@@ -18,12 +18,13 @@
 	"files": [
 		"CHANGELOG.md",
 		"README.md",
-		"dist/**/*"
+		"dist/**/*.d.ts",
+		"dist/**/*.js"
 	],
 	"main": "./dist/index.js",
 	"scripts": {
 		"prebuild": "pnpm clean",
-		"build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+		"build": "tsup",
 		"changeset": "changeset",
 		"changeset:publish": "changeset publish",
 		"changeset:version": "changeset version",
@@ -34,6 +35,7 @@
 		"lint-staged": "lint-staged",
 		"prepare": "husky",
 		"prepublishOnly": "pnpm build",
+		"size": "du -sh dist/ && find dist -name '*.js' -exec wc -c {} + | tail -1",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:ui": "vitest --ui",
@@ -56,7 +58,7 @@
 		"eslint": "^9.27.0",
 		"husky": "^9.0.11",
 		"lint-staged": "^15.2.2",
-		"tsc-alias": "^1.8.16",
+		"tsup": "^8.5.1",
 		"typescript": "^5.0.0",
 		"vitest": "^3.2.4"
 	},
@@ -75,14 +77,15 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
-			"types": "./dist/index.d.ts"
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
 		},
 		"./validation": {
-			"import": "./dist/integrations/validation/index.js",
-			"types": "./dist/integrations/validation/index.d.ts"
+			"types": "./dist/validation.d.ts",
+			"import": "./dist/validation.js"
 		}
 	},
 	"module": "./dist/index.js",
+	"sideEffects": false,
 	"types": "./dist/index.d.ts"
 }

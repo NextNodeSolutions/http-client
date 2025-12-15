@@ -39,10 +39,18 @@ library/
 
 ### Build & Development
 ```bash
-pnpm build              # Build library (clean + tsc + tsc-alias)
+pnpm build              # Build with tsup (minified ESM + .d.ts)
 pnpm clean              # Remove dist directory
 pnpm type-check         # TypeScript validation
+pnpm size               # Check bundle size
 ```
+
+### Build Configuration
+- **Bundler**: tsup (esbuild-based, zero-config)
+- **Format**: ESM-only (minified)
+- **Output**: dist/ (JS + .d.ts files only)
+- **Tree-shaking**: Enabled with `sideEffects: false`
+- **Source maps**: Not included in npm package
 
 ### Testing
 ```bash
@@ -147,7 +155,8 @@ The `template_config.json` defines replaceable variables:
 - **@biomejs/biome**: Modern formatting and linting
 - **@vitest/coverage-v8**: Test coverage reporting
 - **@changesets/cli**: Version management system
-- **typescript**, **tsc-alias**: TypeScript compilation with path mapping
+- **tsup**: Zero-config TypeScript bundler (esbuild-based)
+- **typescript**: TypeScript compilation and type checking
 - **husky**, **lint-staged**: Git hooks and pre-commit checks
 
 ### Production Dependencies
