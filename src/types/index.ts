@@ -1,41 +1,44 @@
 /**
- * Type definitions for the library
+ * Type Definitions - Barrel Export
+ * @module types
  */
 
-/**
- * Configuration options for the client
- */
-export interface ClientConfig {
-  /** API key for authentication */
-  apiKey?: string
-  /** Base URL for API requests */
-  baseUrl?: string
-  /** Request timeout in milliseconds */
-  timeout?: number
-}
+// Result types
+export type {
+	HttpError,
+	HttpErrorCode,
+	HttpResult,
+	ResponseMeta,
+} from './result.js'
 
-/**
- * Response interface for API calls
- */
-export interface ApiResponse<T = unknown> {
-  /** Whether the request was successful */
-  success: boolean
-  /** Response data (if successful) */
-  data?: T
-  /** Error message (if failed) */
-  error?: string
-  /** HTTP status code */
-  statusCode: number
-}
+// Request types
+export type {
+	HttpMethod,
+	RequestConfig,
+	RequestContext,
+	RequestOptions,
+} from './request.js'
 
-/**
- * Generic error interface
- */
-export interface LibraryError {
-  /** Error code */
-  code: string
-  /** Human-readable error message */
-  message: string
-  /** Optional error details */
-  details?: Record<string, unknown>
-}
+// Response types
+export type { ErrorContext, ResponseContext } from './response.js'
+
+// Cache types
+export type { CacheConfig, CacheEntry, CacheStats } from './cache.js'
+
+// Retry types
+export type { RetryConfig, RetryState } from './retry.js'
+
+// Interceptor types
+export type {
+	AfterResponseInterceptor,
+	BeforeRequestInterceptor,
+	InterceptorConfig,
+	OnErrorInterceptor,
+} from './interceptor.js'
+
+// Client types
+export type {
+	HttpClient,
+	HttpClientConfig,
+	ResolvedHttpClientConfig,
+} from './client.js'

@@ -1,66 +1,103 @@
 /**
- * Logger utility for {{project_name}}
- * Centralized logging with @nextnode/logger
+ * HTTP Client Loggers
+ * @module utils/logger
  */
 
 import { createLogger } from '@nextnode/logger'
 
+// Main HTTP client logger
 export const logger = createLogger()
 
-// Specialized loggers for different modules (examples)
-export const apiLogger = createLogger({ 
-	prefix: 'API' 
-})
-
-export const coreLogger = createLogger({ 
-	prefix: 'CORE' 
-})
-
-export const utilsLogger = createLogger({ 
-	prefix: 'UTILS' 
-})
+// Specialized loggers for subsystems
+export const clientLogger = createLogger({ prefix: 'HTTP' })
+export const cacheLogger = createLogger({ prefix: 'CACHE' })
+export const retryLogger = createLogger({ prefix: 'RETRY' })
+export const interceptorLogger = createLogger({ prefix: 'INTERCEPTOR' })
+export const validationLogger = createLogger({ prefix: 'VALIDATION' })
 
 /**
- * Log helper for debugging complex objects
- * @param label - Label for the log entry
- * @param data - Data to log
+ * Sensitive headers that should never be logged
  */
-export const logDebug = (label: string, data: unknown): void => {
-	logger.info(`[DEBUG] ${label}`, { details: data })
+const SENSITIVE_HEADERS = new Set([
+	'authorization',
+	'cookie',
+	'set-cookie',
+	'x-api-key',
+	'x-auth-token',
+])
+
+/**
+ * Sanitize headers for logging (remove sensitive values)
+ */
+export const sanitizeHeaders = (
+	headers: Headers | Record<string, string>,
+): Record<string, string> => {
+	const result: Record<string, string> = {}
+	const entries =
+		headers instanceof Headers ? headers.entries() : Object.entries(headers)
+
+	for (const [key, value] of entries) {
+		const lowerKey = key.toLowerCase()
+		result[key] = SENSITIVE_HEADERS.has(lowerKey) ? '[REDACTED]' : value
+	}
+
+	return result
 }
 
 /**
- * Log helper for API responses
- * @param method - HTTP method
- * @param url - Request URL  
- * @param status - Response status
- * @param data - Response data
+ * Log HTTP request (sanitized)
  */
-export const logApiResponse = (
+export const logRequest = (
 	method: string,
-	url: string, 
-	status: number,
-	data?: unknown
+	url: string,
+	requestId: string,
+	debug: boolean,
 ): void => {
-	const responseDetails = data ? { status, data } : { status }
-	apiLogger.info(`${method.toUpperCase()} ${url}`, {
-		status,
-		details: responseDetails
+	if (!debug) return
+
+	clientLogger.info(`${method} ${url}`, {
+		details: { requestId },
 	})
 }
 
 /**
- * Log helper for errors with context
- * @param error - Error object or message
- * @param context - Additional context
+ * Log HTTP response
  */
-export const logError = (error: unknown, context?: Record<string, unknown>): void => {
-	const errorMessage = error instanceof Error ? error.message : String(error)
-	const errorStack = error instanceof Error ? error.stack : undefined
-	
-	const errorDetails: Record<string, unknown> = { error: errorMessage }
-	if (errorStack) errorDetails.stack = errorStack
-	if (context) errorDetails.context = context
-	
-	logger.error('Operation failed', { details: errorDetails })
+export const logResponse = (
+	method: string,
+	url: string,
+	status: number,
+	duration: number,
+	cached: boolean,
+	debug: boolean,
+): void => {
+	if (!debug) return
+
+	clientLogger.info(`${method} ${url} -> ${status}`, {
+		details: {
+			status,
+			duration: `${duration.toFixed(2)}ms`,
+			cached,
+		},
+	})
+}
+
+/**
+ * Log HTTP error (no sensitive data)
+ */
+export const logHttpError = (
+	error: unknown,
+	context: { url?: string; method?: string; requestId?: string },
+	debug: boolean,
+): void => {
+	if (!debug) return
+
+	const message = error instanceof Error ? error.message : 'Unknown error'
+
+	clientLogger.error('Request failed', {
+		details: {
+			error: message,
+			...context,
+		},
+	})
 }
