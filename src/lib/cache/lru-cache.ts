@@ -15,16 +15,38 @@ import { cacheLogger } from '../../utils/logger.js'
 import { generateCacheKey } from './cache-key.js'
 
 /**
+ * Options for setting a cache entry
+ */
+export interface CacheSetOptions {
+	/** Override TTL for this entry (ms) */
+	readonly ttl?: number
+	/** Tags for grouped invalidation */
+	readonly tags?: readonly string[]
+	/** ETag from response */
+	readonly etag?: string
+	/** Last-Modified from response */
+	readonly lastModified?: string
+}
+
+/**
  * LRU Cache interface
  */
 export interface LRUCache {
 	get<T>(config: RequestConfig): HttpResult<T> | null
-	set<T>(config: RequestConfig, result: HttpResult<T>): void
+	set<T>(
+		config: RequestConfig,
+		result: HttpResult<T>,
+		options?: CacheSetOptions,
+	): void
 	delete(config: RequestConfig): boolean
 	clear(): void
 	getStats(): CacheStats
 	has(config: RequestConfig): boolean
 	isStale(config: RequestConfig): boolean
+	/** Get all cache keys (for pattern matching) */
+	keys(): IterableIterator<string>
+	/** Delete entries by key directly */
+	deleteByKey(key: string): boolean
 }
 
 /**
@@ -94,6 +116,7 @@ export const createLRUCache = (
 	const set = <T>(
 		requestConfig: RequestConfig,
 		result: HttpResult<T>,
+		options?: CacheSetOptions,
 	): void => {
 		// Don't cache errors
 		if (!result.success) return
@@ -116,17 +139,32 @@ export const createLRUCache = (
 			}
 		}
 
+		// Use per-request TTL if provided, otherwise default
+		const entryTtl = options?.ttl ?? defaultTtl
+
 		const entry: CacheEntry<HttpResult<T>> = {
 			data: result,
 			timestamp: now,
-			ttl: defaultTtl,
-			staleUntil: now + defaultTtl + staleWindow,
+			ttl: entryTtl,
+			staleUntil: now + entryTtl + staleWindow,
+		}
+
+		// Add optional fields only if they have values
+		if (options?.etag) {
+			;(entry as { etag: string }).etag = options.etag
+		}
+		if (options?.lastModified) {
+			;(entry as { lastModified: string }).lastModified =
+				options.lastModified
+		}
+		if (options?.tags?.length) {
+			;(entry as { tags: readonly string[] }).tags = options.tags
 		}
 
 		cache.set(key, entry)
 
 		if (debug) {
-			cacheLogger.info('Cache set', { details: { key, ttl: defaultTtl } })
+			cacheLogger.info('Cache set', { details: { key, ttl: entryTtl } })
 		}
 	}
 
@@ -185,6 +223,10 @@ export const createLRUCache = (
 		return true
 	}
 
+	const getKeys = (): IterableIterator<string> => cache.keys()
+
+	const deleteByKey = (key: string): boolean => cache.delete(key)
+
 	return {
 		get,
 		set,
@@ -193,6 +235,8 @@ export const createLRUCache = (
 		getStats,
 		has,
 		isStale,
+		keys: getKeys,
+		deleteByKey,
 	}
 }
 

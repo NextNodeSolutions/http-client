@@ -4,7 +4,14 @@
  */
 
 // Cache types
-export type { CacheConfig, CacheEntry, CacheStats } from './cache.js'
+export type {
+	CacheConfig,
+	CacheControlDirectives,
+	CacheEntry,
+	CacheMode,
+	CacheStats,
+	CacheStorage,
+} from './cache.js'
 // Client types
 export type { HttpClient, HttpClientConfig } from './client.js'
 // Interceptor types

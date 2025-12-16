@@ -10,8 +10,11 @@ import {
 	validateRequestBody,
 	validateResponse,
 } from './integrations/validation/index.js'
-import type { CacheSystem } from './lib/cache/index.js'
-import { createCacheSystem } from './lib/cache/index.js'
+import type { CacheSetOptions, CacheSystem } from './lib/cache/index.js'
+import {
+	createCacheSystem,
+	generateVaryAwareCacheKey,
+} from './lib/cache/index.js'
 import { buildRequestContext, executeFetch } from './lib/client/index.js'
 import type { InterceptorChain } from './lib/interceptors/index.js'
 import { createInterceptorChain } from './lib/interceptors/index.js'
@@ -198,11 +201,50 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 		const context = buildRequestContext(requestConfig, config)
 
-		// Determine if request is cacheable
+		// Determine if request is cacheable based on mode
 		const shouldCache =
 			cacheSystem &&
 			!requestConfig.noCache &&
+			!requestConfig.forceRevalidate &&
+			cacheSystem.mode !== 'off' &&
+			cacheSystem.mode !== 'manual' &&
 			cacheSystem.isCacheable(requestConfig.method)
+
+		// Generate cache key (with Vary support if configured)
+		const getCacheKey = () =>
+			cacheSystem?.varyHeaders.length
+				? generateVaryAwareCacheKey(
+						requestConfig,
+						cacheSystem.varyHeaders,
+					)
+				: undefined
+
+		// Build cache set options from request config
+		const buildCacheSetOptions = (): CacheSetOptions => {
+			const cacheConfig = getCacheConfig(config)
+			const options: CacheSetOptions = {}
+
+			// Per-request TTL override
+			if (requestConfig.cacheTtl !== undefined) {
+				;(options as { ttl: number }).ttl = requestConfig.cacheTtl
+			}
+
+			// Combine per-request tags with auto-tags from config
+			const tags: string[] = []
+			if (requestConfig.cacheTags) {
+				tags.push(...requestConfig.cacheTags)
+			}
+			if (cacheConfig?.tags) {
+				for (const tagFn of Object.values(cacheConfig.tags)) {
+					tags.push(...tagFn(requestConfig))
+				}
+			}
+			if (tags.length > 0) {
+				;(options as { tags: readonly string[] }).tags = tags
+			}
+
+			return options
+		}
 
 		// Check cache first
 		if (shouldCache) {
@@ -244,7 +286,14 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 				// Cache successful responses
 				if (result.success) {
-					cacheSystem.lru.set(requestConfig, result)
+					const cacheSetOpts = buildCacheSetOptions()
+					cacheSystem.lru.set(requestConfig, result, cacheSetOpts)
+
+					// Register tags for invalidation
+					const cacheKey = getCacheKey()
+					if (cacheKey && cacheSetOpts.tags?.length) {
+						cacheSystem.tags.register(cacheKey, cacheSetOpts.tags)
+					}
 				}
 
 				return result
@@ -255,7 +304,14 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 		// Cache successful responses
 		if (shouldCache && result.success) {
-			cacheSystem.lru.set(requestConfig, result)
+			const cacheSetOpts = buildCacheSetOptions()
+			cacheSystem.lru.set(requestConfig, result, cacheSetOpts)
+
+			// Register tags for invalidation
+			const cacheKey = getCacheKey()
+			if (cacheKey && cacheSetOpts.tags?.length) {
+				cacheSystem.tags.register(cacheKey, cacheSetOpts.tags)
+			}
 		}
 
 		// Validate response if schema provided
@@ -351,6 +407,7 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 	// Cache management
 	const clearCache = (): void => {
 		cacheSystem?.lru.clear()
+		cacheSystem?.tags.clear()
 	}
 
 	const getCacheStats = (): CacheStats => {
@@ -365,6 +422,47 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 			}
 		}
 		return cacheSystem.lru.getStats()
+	}
+
+	const invalidateCache = (pattern: string): void => {
+		if (!cacheSystem) return
+
+		// Get keys matching the pattern
+		const keysToDelete = cacheSystem.tags.getKeysByPattern(pattern)
+
+		// Also check cache keys directly for pattern match
+		for (const key of cacheSystem.lru.keys()) {
+			// Simple pattern matching for URL patterns
+			const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+			const regexPattern = escaped
+				.replace(/\*/g, '.*')
+				.replace(/\?/g, '.')
+			const regex = new RegExp(`^${regexPattern}$`)
+
+			if (regex.test(key)) {
+				cacheSystem.lru.deleteByKey(key)
+				cacheSystem.tags.unregister(key)
+			}
+		}
+
+		// Delete keys found via tag registry
+		for (const key of keysToDelete) {
+			cacheSystem.lru.deleteByKey(key)
+			cacheSystem.tags.unregister(key)
+		}
+	}
+
+	const invalidateByTag = (tag: string): void => {
+		if (!cacheSystem) return
+
+		// Get all keys with this tag
+		const keysToDelete = cacheSystem.tags.getKeysByTag(tag)
+
+		// Delete each key from cache and unregister
+		for (const key of keysToDelete) {
+			cacheSystem.lru.deleteByKey(key)
+			cacheSystem.tags.unregister(key)
+		}
 	}
 
 	return {
@@ -385,5 +483,7 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 		noRetry,
 		clearCache,
 		getCacheStats,
+		invalidateCache,
+		invalidateByTag,
 	}
 }

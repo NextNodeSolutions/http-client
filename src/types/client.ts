@@ -78,4 +78,8 @@ export interface HttpClient {
 	// Cache management
 	clearCache(): void
 	getCacheStats(): CacheStats
+	/** Invalidate cache entries matching a URL pattern (e.g., '/users/*') */
+	invalidateCache(pattern: string): void
+	/** Invalidate cache entries with a specific tag */
+	invalidateByTag(tag: string): void
 }

@@ -3,26 +3,61 @@
  * @module lib/cache
  */
 
-import type { CacheConfig, HttpMethod } from '../../types/index.js'
+import type { CacheConfig, CacheMode, HttpMethod } from '../../types/index.js'
 import type { Deduplicator } from './deduplicator.js'
 import { createDeduplicator } from './deduplicator.js'
 import type { LRUCache } from './lru-cache.js'
 import { createLRUCache } from './lru-cache.js'
 import type { SWRCache } from './swr-cache.js'
 import { createSWRCache } from './swr-cache.js'
+import type { TagRegistry } from './tag-registry.js'
+import { createTagRegistry } from './tag-registry.js'
 
-export { generateCacheKey } from './cache-key.js'
+export {
+	calculateTtl,
+	isCacheableResponse,
+	needsRevalidation,
+	parseCacheControl,
+} from './cache-control.js'
+export {
+	extractVaryHeaderValues,
+	generateCacheKey,
+	generateVaryAwareCacheKey,
+} from './cache-key.js'
+export {
+	type CachingHeaders,
+	type ConditionalHeaders,
+	extractCachingHeaders,
+	extractConditionalHeaders,
+	hasConditionalHeaders,
+	isNotModified,
+	mergeConditionalHeaders,
+} from './conditional-request.js'
 export { createDeduplicator, type Deduplicator } from './deduplicator.js'
-export { createLRUCache, type LRUCache } from './lru-cache.js'
+export {
+	type CacheSetOptions,
+	createLRUCache,
+	type LRUCache,
+} from './lru-cache.js'
+export {
+	createLocalStorage,
+	createMemoryStorage,
+	type LocalStorageConfig,
+	type MemoryStorageConfig,
+} from './storage/index.js'
 export { createSWRCache, type SWRCache } from './swr-cache.js'
+export { createTagRegistry, type TagRegistry } from './tag-registry.js'
 
 /**
  * Unified cache system
  */
 export interface CacheSystem {
-	lru: LRUCache
-	swr: SWRCache
-	deduplicator: Deduplicator
+	readonly lru: LRUCache
+	readonly swr: SWRCache
+	readonly deduplicator: Deduplicator
+	readonly tags: TagRegistry
+	readonly mode: CacheMode
+	readonly varyHeaders: readonly string[]
 	isCacheable: (method: HttpMethod) => boolean
 }
 
@@ -41,8 +76,11 @@ export const createCacheSystem = (
 	const lru = createLRUCache(config, debug)
 	const swr = createSWRCache(lru, debug)
 	const deduplicator = createDeduplicator(debug)
+	const tags = createTagRegistry()
 
 	const cacheableMethods = config.methods ?? DEFAULT_CACHEABLE_METHODS
+	const mode = config.mode ?? 'standard' // intentional fallback - default HTTP-compliant mode
+	const varyHeaders = config.varyHeaders ?? [] // intentional fallback - no vary headers by default
 
 	const isCacheable = (method: HttpMethod): boolean =>
 		cacheableMethods.includes(method)
@@ -51,6 +89,9 @@ export const createCacheSystem = (
 		lru,
 		swr,
 		deduplicator,
+		tags,
+		mode,
+		varyHeaders,
 		isCacheable,
 	}
 }

@@ -24,6 +24,13 @@
 
 // Main factory
 export { createHttpClient } from './http-client.js'
+// Storage adapters
+export {
+	createLocalStorage,
+	createMemoryStorage,
+	type LocalStorageConfig,
+	type MemoryStorageConfig,
+} from './lib/cache/storage/index.js'
 // Error utilities
 export { HttpErrorCodes } from './lib/errors/index.js'
 // Type exports
@@ -33,7 +40,11 @@ export type {
 	BeforeRequestInterceptor,
 	// Cache types
 	CacheConfig,
+	CacheControlDirectives,
+	CacheEntry,
+	CacheMode,
 	CacheStats,
+	CacheStorage,
 	// Response types
 	ErrorContext,
 	// Client types

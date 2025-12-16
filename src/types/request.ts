@@ -43,6 +43,12 @@ export interface RequestOptions {
 	readonly bodySchema?: Schema<unknown>
 	/** Custom request ID for tracing */
 	readonly requestId?: string
+	/** Override TTL for this request (ms) */
+	readonly cacheTtl?: number
+	/** Tags for this cached response */
+	readonly cacheTags?: readonly string[]
+	/** Force revalidation even if cached */
+	readonly forceRevalidate?: boolean
 }
 
 /**
