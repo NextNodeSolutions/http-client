@@ -50,7 +50,7 @@
 		"@changesets/changelog-github": "^0.5.1",
 		"@changesets/cli": "^2.29.4",
 		"@commitlint/cli": "^19",
-		"@nextnode/standards": "^2.2.0",
+		"@nextnode/standards": "^2.2.1",
 		"@types/node": "^22",
 		"@vitest/coverage-v8": "^3",
 		"better-sort-package-json": "^1",
@@ -86,6 +86,12 @@
 	},
 	"module": "./dist/index.js",
 	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"esbuild",
+			"node",
+			"unrs-resolver"
+		],
 		"overrides": {
 			"brace-expansion@>=2.0.0 <=2.0.1": ">=2.0.2",
 			"glob@>=10.2.0 <10.5.0": ">=10.5.0",
