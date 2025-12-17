@@ -22,12 +22,3 @@ export interface RetryConfig {
 	/** Custom retry condition */
 	readonly shouldRetry?: (error: HttpError, attempt: number) => boolean
 }
-
-/**
- * Retry state tracking (internal)
- */
-export interface RetryState {
-	readonly attempt: number
-	readonly lastError?: HttpError
-	readonly nextDelay: number
-}

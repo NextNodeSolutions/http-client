@@ -37,6 +37,7 @@ import {
 	createBasicAuthHeader,
 	createBearerAuthHeader,
 } from './utils/headers.js'
+import { matchGlobPattern } from './utils/pattern.js'
 
 /**
  * Extract cache config object if available
@@ -427,25 +428,17 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 	const invalidateCache = (pattern: string): void => {
 		if (!cacheSystem) return
 
-		// Get keys matching the pattern
-		const keysToDelete = cacheSystem.tags.getKeysByPattern(pattern)
+		// Collect all keys to delete (avoid duplicates with Set)
+		const keysToDelete = new Set(cacheSystem.tags.getKeysByPattern(pattern))
 
 		// Also check cache keys directly for pattern match
 		for (const key of cacheSystem.lru.keys()) {
-			// Simple pattern matching for URL patterns
-			const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-			const regexPattern = escaped
-				.replace(/\*/g, '.*')
-				.replace(/\?/g, '.')
-			const regex = new RegExp(`^${regexPattern}$`)
-
-			if (regex.test(key)) {
-				cacheSystem.lru.deleteByKey(key)
-				cacheSystem.tags.unregister(key)
+			if (matchGlobPattern(pattern, key)) {
+				keysToDelete.add(key)
 			}
 		}
 
-		// Delete keys found via tag registry
+		// Delete all matching keys
 		for (const key of keysToDelete) {
 			cacheSystem.lru.deleteByKey(key)
 			cacheSystem.tags.unregister(key)

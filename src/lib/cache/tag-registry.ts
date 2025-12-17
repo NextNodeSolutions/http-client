@@ -3,6 +3,8 @@
  * @module lib/cache/tag-registry
  */
 
+import { matchGlobPattern } from '../../utils/pattern.js'
+
 /**
  * Tag registry interface for cache invalidation
  */
@@ -81,16 +83,9 @@ export const createTagRegistry = (): TagRegistry => {
 		tagToKeys.get(tag) ?? new Set()
 
 	const getKeysByPattern = (pattern: string): readonly string[] => {
-		// Convert glob pattern to regex
-		// Escape special regex characters except * and ?
-		const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-		// Convert glob * to regex .* and ? to .
-		const regexPattern = escaped.replace(/\*/g, '.*').replace(/\?/g, '.')
-		const regex = new RegExp(`^${regexPattern}$`)
-
 		const matches: string[] = []
 		for (const key of allKeys) {
-			if (regex.test(key)) {
+			if (matchGlobPattern(pattern, key)) {
 				matches.push(key)
 			}
 		}

@@ -13,26 +13,7 @@ import { createSWRCache } from './swr-cache.js'
 import type { TagRegistry } from './tag-registry.js'
 import { createTagRegistry } from './tag-registry.js'
 
-export {
-	calculateTtl,
-	isCacheableResponse,
-	needsRevalidation,
-	parseCacheControl,
-} from './cache-control.js'
-export {
-	extractVaryHeaderValues,
-	generateCacheKey,
-	generateVaryAwareCacheKey,
-} from './cache-key.js'
-export {
-	type CachingHeaders,
-	type ConditionalHeaders,
-	extractCachingHeaders,
-	extractConditionalHeaders,
-	hasConditionalHeaders,
-	isNotModified,
-	mergeConditionalHeaders,
-} from './conditional-request.js'
+export { generateCacheKey, generateVaryAwareCacheKey } from './cache-key.js'
 export { createDeduplicator, type Deduplicator } from './deduplicator.js'
 export {
 	type CacheSetOptions,

@@ -19,5 +19,6 @@ export {
 	logResponse,
 	retryLogger,
 } from './logger.js'
+export { matchGlobPattern } from './pattern.js'
 export { buildQueryString, buildUrl } from './query-string.js'
 export { generateRequestId } from './request-id.js'

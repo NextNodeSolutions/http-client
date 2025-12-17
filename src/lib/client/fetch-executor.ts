@@ -27,9 +27,9 @@ export const executeFetch = async <T>(
 	const controller = new AbortController()
 	const timeoutId = setTimeout(() => controller.abort(), context.timeout)
 
-	// Combine signals if external signal provided
+	// Combine signals if external signal provided (Node 24+ / modern browsers)
 	const signal = context.signal
-		? combineAbortSignals(context.signal, controller.signal)
+		? AbortSignal.any([context.signal, controller.signal])
 		: controller.signal
 
 	logRequest(context.method, context.url, context.requestId, debug)
@@ -174,26 +174,4 @@ const safeParseJson = async (response: Response): Promise<unknown> => {
 	} catch {
 		return undefined
 	}
-}
-
-/**
- * Combine multiple abort signals into one
- */
-const combineAbortSignals = (
-	external: AbortSignal,
-	internal: AbortSignal,
-): AbortSignal => {
-	const controller = new AbortController()
-
-	const abort = (): void => controller.abort()
-
-	external.addEventListener('abort', abort)
-	internal.addEventListener('abort', abort)
-
-	// If either is already aborted, abort immediately
-	if (external.aborted || internal.aborted) {
-		controller.abort()
-	}
-
-	return controller.signal
 }
