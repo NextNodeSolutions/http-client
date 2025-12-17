@@ -147,18 +147,11 @@ export const createLRUCache = (
 			timestamp: now,
 			ttl: entryTtl,
 			staleUntil: now + entryTtl + staleWindow,
-		}
-
-		// Add optional fields only if they have values
-		if (options?.etag) {
-			;(entry as { etag: string }).etag = options.etag
-		}
-		if (options?.lastModified) {
-			;(entry as { lastModified: string }).lastModified =
-				options.lastModified
-		}
-		if (options?.tags?.length) {
-			;(entry as { tags: readonly string[] }).tags = options.tags
+			...(options?.etag && { etag: options.etag }),
+			...(options?.lastModified && {
+				lastModified: options.lastModified,
+			}),
+			...(options?.tags?.length && { tags: options.tags }),
 		}
 
 		cache.set(key, entry)
@@ -213,13 +206,10 @@ export const createLRUCache = (
 
 		const now = Date.now()
 
-		// Expired
-		if (now > entry.staleUntil) return true
-
-		// Fresh
+		// Fresh - only case where entry is not stale
 		if (now <= entry.timestamp + entry.ttl) return false
 
-		// Stale
+		// Expired or stale
 		return true
 	}
 

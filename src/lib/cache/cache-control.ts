@@ -26,7 +26,13 @@ export const parseCacheControl = (
 ): CacheControlDirectives => {
 	if (!header) return DEFAULT_DIRECTIVES
 
-	const directives: CacheControlDirectives = { ...DEFAULT_DIRECTIVES }
+	// Use mutable object during construction
+	let noStore = false
+	let noCache = false
+	let isPrivate = false
+	let isPublic = false
+	let mustRevalidate = false
+	let immutable = false
 	let maxAge: number | undefined
 	let sMaxAge: number | undefined
 
@@ -37,17 +43,17 @@ export const parseCacheControl = (
 		const trimmed = part.trim()
 
 		if (trimmed === 'no-store') {
-			;(directives as { noStore: boolean }).noStore = true
+			noStore = true
 		} else if (trimmed === 'no-cache') {
-			;(directives as { noCache: boolean }).noCache = true
+			noCache = true
 		} else if (trimmed === 'private') {
-			;(directives as { private: boolean }).private = true
+			isPrivate = true
 		} else if (trimmed === 'public') {
-			;(directives as { public: boolean }).public = true
+			isPublic = true
 		} else if (trimmed === 'must-revalidate') {
-			;(directives as { mustRevalidate: boolean }).mustRevalidate = true
+			mustRevalidate = true
 		} else if (trimmed === 'immutable') {
-			;(directives as { immutable: boolean }).immutable = true
+			immutable = true
 		} else if (trimmed.startsWith('max-age=')) {
 			const value = Number.parseInt(trimmed.slice(8), 10)
 			if (!Number.isNaN(value)) {
@@ -61,15 +67,17 @@ export const parseCacheControl = (
 		}
 	}
 
-	// Only include maxAge/sMaxAge if they have values
-	const result: CacheControlDirectives = { ...directives }
-	if (maxAge !== undefined) {
-		;(result as { maxAge: number }).maxAge = maxAge
+	// Build immutable result object at once
+	return {
+		noStore,
+		noCache,
+		private: isPrivate,
+		public: isPublic,
+		mustRevalidate,
+		immutable,
+		...(maxAge !== undefined && { maxAge }),
+		...(sMaxAge !== undefined && { sMaxAge }),
 	}
-	if (sMaxAge !== undefined) {
-		;(result as { sMaxAge: number }).sMaxAge = sMaxAge
-	}
-	return result
 }
 
 /**

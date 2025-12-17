@@ -27,20 +27,10 @@ export interface CachingHeaders {
  */
 export const extractConditionalHeaders = (
 	entry: CacheEntry<unknown>,
-): ConditionalHeaders => {
-	const headers: ConditionalHeaders = {}
-
-	if (entry.etag) {
-		;(headers as { 'If-None-Match': string })['If-None-Match'] = entry.etag
-	}
-
-	if (entry.lastModified) {
-		;(headers as { 'If-Modified-Since': string })['If-Modified-Since'] =
-			entry.lastModified
-	}
-
-	return headers
-}
+): ConditionalHeaders => ({
+	...(entry.etag && { 'If-None-Match': entry.etag }),
+	...(entry.lastModified && { 'If-Modified-Since': entry.lastModified }),
+})
 
 /**
  * Check if response is 304 Not Modified
@@ -54,14 +44,10 @@ export const extractCachingHeaders = (headers: Headers): CachingHeaders => {
 	const etag = headers.get('ETag')
 	const lastModified = headers.get('Last-Modified')
 
-	const result: CachingHeaders = {}
-	if (etag) {
-		;(result as { etag: string }).etag = etag
+	return {
+		...(etag && { etag }),
+		...(lastModified && { lastModified }),
 	}
-	if (lastModified) {
-		;(result as { lastModified: string }).lastModified = lastModified
-	}
-	return result
 }
 
 /**

@@ -94,7 +94,7 @@ export const executeFetch = async <T>(
 
 		return {
 			success: true,
-			data,
+			data: data as T, // Safe cast: caller expects T, undefined for 204/empty is semantically correct
 			response: responseMeta,
 		}
 	} catch (error) {
@@ -140,14 +140,17 @@ const buildResponseMeta = (
 
 /**
  * Parse response body based on content type
+ * Returns undefined for 204 No Content or empty body responses
  */
-const parseResponseBody = async <T>(response: Response): Promise<T> => {
-	// HEAD requests have no body
+const parseResponseBody = async <T>(
+	response: Response,
+): Promise<T | undefined> => {
+	// No body for 204 No Content or empty responses
 	if (
 		response.status === 204 ||
 		response.headers.get('content-length') === '0'
 	) {
-		return undefined as T
+		return undefined
 	}
 
 	// Parse JSON if content type indicates JSON
