@@ -12,8 +12,11 @@ import {
 } from './integrations/validation/index.js'
 import type { CacheSetOptions, CacheSystem } from './lib/cache/index.js'
 import {
+	calculateTtl,
 	createCacheSystem,
 	generateVaryAwareCacheKey,
+	isCacheableResponse,
+	parseCacheControl,
 } from './lib/cache/index.js'
 import { buildRequestContext, executeFetch } from './lib/client/index.js'
 import type { InterceptorChain } from './lib/interceptors/index.js'
@@ -220,14 +223,30 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 					)
 				: undefined
 
-		// Build cache set options from request config
-		const buildCacheSetOptions = (): CacheSetOptions => {
+		// Build cache set options from request config and optional response headers
+		const buildCacheSetOptions = (
+			responseHeaders?: Headers,
+		): CacheSetOptions => {
 			const cacheConfig = getCacheConfig(config)
 			const options: CacheSetOptions = {}
+			const defaultTtl = cacheConfig?.ttl ?? 60000 // 1 minute default
 
-			// Per-request TTL override
+			// TTL priority: per-request > Cache-Control header > config default
 			if (requestConfig.cacheTtl !== undefined) {
+				// Per-request TTL override takes highest priority
 				;(options as { ttl: number }).ttl = requestConfig.cacheTtl
+			} else if (responseHeaders && cacheSystem?.mode === 'standard') {
+				// In 'standard' mode, use TTL from Cache-Control headers
+				const cacheControlHeader = responseHeaders.get('Cache-Control')
+				if (cacheControlHeader) {
+					const directives = parseCacheControl(cacheControlHeader)
+					const calculatedTtl = calculateTtl(
+						directives,
+						responseHeaders,
+						defaultTtl,
+					)
+					;(options as { ttl: number }).ttl = calculatedTtl
+				}
 			}
 
 			// Combine per-request tags with auto-tags from config
@@ -245,6 +264,42 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 			}
 
 			return options
+		}
+
+		// Check if result should be cached based on Cache-Control directives
+		const shouldCacheResult = <T>(result: HttpResult<T>): boolean => {
+			if (!result.success) return false
+			if (!cacheSystem) return false
+
+			// In 'standard' mode, respect Cache-Control directives
+			if (cacheSystem.mode === 'standard') {
+				const directives = result.response.cacheControl
+				if (directives) {
+					return isCacheableResponse(directives, 'standard')
+				}
+			}
+
+			// In 'force' mode, check for explicit no-store
+			if (cacheSystem.mode === 'force') {
+				const directives = result.response.cacheControl
+				if (directives?.noStore) return false
+			}
+
+			return true
+		}
+
+		// Store result in cache with tags registration
+		const storeInCache = <T>(result: HttpResult<T>): void => {
+			if (!cacheSystem || !result.success) return
+
+			const cacheSetOpts = buildCacheSetOptions(result.response.headers)
+			cacheSystem.lru.set(requestConfig, result, cacheSetOpts)
+
+			// Register tags for invalidation
+			const cacheKey = getCacheKey()
+			if (cacheKey && cacheSetOpts.tags?.length) {
+				cacheSystem.tags.register(cacheKey, cacheSetOpts.tags)
+			}
 		}
 
 		// Check cache first
@@ -285,16 +340,9 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 					() => executeCoreRequest<T>(context, requestConfig),
 				)
 
-				// Cache successful responses
-				if (result.success) {
-					const cacheSetOpts = buildCacheSetOptions()
-					cacheSystem.lru.set(requestConfig, result, cacheSetOpts)
-
-					// Register tags for invalidation
-					const cacheKey = getCacheKey()
-					if (cacheKey && cacheSetOpts.tags?.length) {
-						cacheSystem.tags.register(cacheKey, cacheSetOpts.tags)
-					}
+				// Cache successful responses (respecting Cache-Control in standard mode)
+				if (result.success && shouldCacheResult(result)) {
+					storeInCache(result)
 				}
 
 				return result
@@ -303,16 +351,9 @@ export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
 
 		const result = await executeCoreRequest<T>(context, requestConfig)
 
-		// Cache successful responses
-		if (shouldCache && result.success) {
-			const cacheSetOpts = buildCacheSetOptions()
-			cacheSystem.lru.set(requestConfig, result, cacheSetOpts)
-
-			// Register tags for invalidation
-			const cacheKey = getCacheKey()
-			if (cacheKey && cacheSetOpts.tags?.length) {
-				cacheSystem.tags.register(cacheKey, cacheSetOpts.tags)
-			}
+		// Cache successful responses (respecting Cache-Control in standard mode)
+		if (shouldCache && result.success && shouldCacheResult(result)) {
+			storeInCache(result)
 		}
 
 		// Validate response if schema provided

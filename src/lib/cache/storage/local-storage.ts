@@ -20,6 +20,20 @@ export interface LocalStorageConfig {
  * Provides persistence across page reloads
  *
  * Note: Only works in browser environments where localStorage is available
+ *
+ * @security **WARNING**: Data stored in localStorage is accessible to:
+ * - Any JavaScript code running on the same origin (XSS vulnerability risk)
+ * - Browser extensions with storage permissions
+ * - Physical access to the device
+ *
+ * **DO NOT** use localStorage cache for responses containing:
+ * - Authentication tokens (JWT, API keys, session tokens)
+ * - Personally identifiable information (PII)
+ * - Financial data or payment information
+ * - Any sensitive or confidential data
+ *
+ * For sensitive data, use the default in-memory cache (createMemoryStorage)
+ * which does not persist and is cleared on page reload.
  */
 export const createLocalStorage = <T = unknown>(
 	config: LocalStorageConfig = {},

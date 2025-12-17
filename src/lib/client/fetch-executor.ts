@@ -11,6 +11,7 @@ import type {
 } from '../../types/index.js'
 import { isJsonContentType } from '../../utils/headers.js'
 import { logHttpError, logRequest, logResponse } from '../../utils/logger.js'
+import { parseCacheControl } from '../cache/cache-control.js'
 import { createHttpError, mapFetchError } from '../errors/index.js'
 
 /**
@@ -136,6 +137,7 @@ const buildResponseMeta = (
 	duration,
 	cached: false,
 	cacheHit: 'miss',
+	cacheControl: parseCacheControl(response.headers.get('Cache-Control')),
 })
 
 /**

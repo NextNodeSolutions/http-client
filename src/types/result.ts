@@ -3,6 +3,8 @@
  * @module types/result
  */
 
+import type { CacheControlDirectives } from './cache.js'
+
 /**
  * HTTP error codes for type-safe error handling
  */
@@ -43,6 +45,8 @@ export interface ResponseMeta {
 	readonly duration: number
 	readonly cached: boolean
 	readonly cacheHit?: 'fresh' | 'stale' | 'miss'
+	/** Parsed Cache-Control directives from response headers */
+	readonly cacheControl?: CacheControlDirectives
 }
 
 /**

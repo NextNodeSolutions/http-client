@@ -22,7 +22,8 @@ const DEFAULTS = {
 	maxRetries: 3,
 	baseDelay: 1000,
 	maxDelay: 30000,
-	jitter: 0.1,
+	/** Higher jitter (25%) for better thundering herd protection */
+	jitter: 0.25,
 } as const
 
 /**

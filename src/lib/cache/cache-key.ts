@@ -35,6 +35,23 @@ export const generateCacheKey = (config: RequestConfig): string => {
  *
  * @param config - Request configuration
  * @param varyHeaders - Headers to include in cache key
+ *
+ * @security **IMPORTANT**: For authenticated endpoints, you MUST include
+ * 'Authorization' in varyHeaders to prevent cache poisoning between users.
+ *
+ * Without varyHeaders including Authorization:
+ * 1. User A (admin) requests GET /api/users → cached with admin data
+ * 2. User B (regular) requests GET /api/users → receives admin data from cache
+ *
+ * @example
+ * ```typescript
+ * // Correct configuration for authenticated endpoints
+ * const client = createHttpClient({
+ *   cache: {
+ *     varyHeaders: ['Authorization', 'Accept-Language']
+ *   }
+ * })
+ * ```
  */
 export const generateVaryAwareCacheKey = (
 	config: RequestConfig,
@@ -61,25 +78,4 @@ export const generateVaryAwareCacheKey = (
 
 	// Append vary part to key
 	return `${baseKey}|vary[${varyParts.join(',')}]`
-}
-
-/**
- * Extract Vary header values from request for storage
- * These are stored with the cache entry for later key reconstruction
- */
-export const extractVaryHeaderValues = (
-	config: RequestConfig,
-	varyHeaders: readonly string[],
-): Readonly<Record<string, string>> => {
-	const values: Record<string, string> = {}
-
-	for (const header of varyHeaders) {
-		const value =
-			config.headers?.[header] ?? config.headers?.[header.toLowerCase()]
-		if (value !== undefined) {
-			values[header] = value
-		}
-	}
-
-	return values
 }

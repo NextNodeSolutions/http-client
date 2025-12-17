@@ -12,6 +12,11 @@
 const MAX_PATTERN_LENGTH = 100
 
 /**
+ * Maximum recursion depth to prevent stack overflow
+ */
+const MAX_RECURSION_DEPTH = 100
+
+/**
  * Match a glob pattern against a string value
  * Supports:
  * - `*` matches any sequence of characters (including empty)
@@ -35,19 +40,24 @@ export const matchGlobPattern = (pattern: string, value: string): boolean => {
 		return pattern === value
 	}
 
-	return matchRecursive(pattern, 0, value, 0)
+	return matchRecursive(pattern, 0, value, 0, 0)
 }
 
 /**
- * Recursive matching with memoization-friendly structure
- * Uses iterative approach for * to avoid stack overflow
+ * Recursive matching with depth limit to prevent stack overflow
  */
 const matchRecursive = (
 	pattern: string,
 	patternStart: number,
 	value: string,
 	valueStart: number,
+	depth: number,
 ): boolean => {
+	// Prevent stack overflow from deeply nested patterns
+	if (depth >= MAX_RECURSION_DEPTH) {
+		return false
+	}
+
 	const pLen = pattern.length
 	const vLen = value.length
 
@@ -70,7 +80,7 @@ const matchRecursive = (
 
 			// Try matching * with different lengths
 			while (vIdx <= vLen) {
-				if (matchRecursive(pattern, pIdx, value, vIdx)) {
+				if (matchRecursive(pattern, pIdx, value, vIdx, depth + 1)) {
 					return true
 				}
 				vIdx++
